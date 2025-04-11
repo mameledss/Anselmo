@@ -1,0 +1,17 @@
+C:\Users\mamel\Desktop\Scuola\C#\Anselmo\Gioco-Anselmo\bin\Debug\net8.0-windows\Anselmo.exe
+C:\Users\mamel\Desktop\Scuola\C#\Anselmo\Gioco-Anselmo\bin\Debug\net8.0-windows\Anselmo.deps.json
+C:\Users\mamel\Desktop\Scuola\C#\Anselmo\Gioco-Anselmo\bin\Debug\net8.0-windows\Anselmo.runtimeconfig.json
+C:\Users\mamel\Desktop\Scuola\C#\Anselmo\Gioco-Anselmo\bin\Debug\net8.0-windows\Anselmo.dll
+C:\Users\mamel\Desktop\Scuola\C#\Anselmo\Gioco-Anselmo\bin\Debug\net8.0-windows\Anselmo.pdb
+C:\Users\mamel\Desktop\Scuola\C#\Anselmo\Gioco-Anselmo\obj\Debug\net8.0-windows\Anselmo.Form1.resources
+C:\Users\mamel\Desktop\Scuola\C#\Anselmo\Gioco-Anselmo\obj\Debug\net8.0-windows\Anselmo.csproj.GenerateResource.cache
+C:\Users\mamel\Desktop\Scuola\C#\Anselmo\Gioco-Anselmo\obj\Debug\net8.0-windows\Anselmo.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\mamel\Desktop\Scuola\C#\Anselmo\Gioco-Anselmo\obj\Debug\net8.0-windows\Anselmo.AssemblyInfoInputs.cache
+C:\Users\mamel\Desktop\Scuola\C#\Anselmo\Gioco-Anselmo\obj\Debug\net8.0-windows\Anselmo.AssemblyInfo.cs
+C:\Users\mamel\Desktop\Scuola\C#\Anselmo\Gioco-Anselmo\obj\Debug\net8.0-windows\Anselmo.csproj.CoreCompileInputs.cache
+C:\Users\mamel\Desktop\Scuola\C#\Anselmo\Gioco-Anselmo\obj\Debug\net8.0-windows\Anselmo.sourcelink.json
+C:\Users\mamel\Desktop\Scuola\C#\Anselmo\Gioco-Anselmo\obj\Debug\net8.0-windows\Anselmo.dll
+C:\Users\mamel\Desktop\Scuola\C#\Anselmo\Gioco-Anselmo\obj\Debug\net8.0-windows\refint\Anselmo.dll
+C:\Users\mamel\Desktop\Scuola\C#\Anselmo\Gioco-Anselmo\obj\Debug\net8.0-windows\Anselmo.pdb
+C:\Users\mamel\Desktop\Scuola\C#\Anselmo\Gioco-Anselmo\obj\Debug\net8.0-windows\Anselmo.genruntimeconfig.cache
+C:\Users\mamel\Desktop\Scuola\C#\Anselmo\Gioco-Anselmo\obj\Debug\net8.0-windows\ref\Anselmo.dll
