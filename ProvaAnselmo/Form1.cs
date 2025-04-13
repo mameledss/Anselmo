@@ -1,590 +1,415 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Threading.Tasks;
+using System.Threading;
 
-namespace AnselmoConiglioProgetto
+namespace ProvaAnselmo
 {
-	public partial class FormPrincipale : Form
+	public partial class Form1 : Form
 	{
-		// Definizione dei colori disponibili
-		private readonly string[] COLORI = { "Verde", "Azzurro", "Giallo", "Arancione", "Rosa", "Viola" };
-
-		// Code per le uova
 		private Queue<Uovo> fabbrica = new Queue<Uovo>();
-		private Queue<Uovo> pratoDiUova = new Queue<Uovo>();
-		private Queue<Uovo> uovaRimandate = new Queue<Uovo>();
-
-		// Componenti per il backtracking
-		private Stack<Queue<Uovo>> storiaUova = new Stack<Queue<Uovo>>();
-		private Stack<Uovo> uovaNascoste = new Stack<Uovo>();
+		private Queue<Uovo> prato = new Queue<Uovo>(); 
+					
+		private List<Uovo> pratoVisualizzazione = new List<Uovo>();
 
 		private Random random = new Random();
-		private int numeroTotaleUova = 20; // Numero predefinito di uova
+		private ListBox lstFabbrica;
+		private ListBox lstPrato;
+		private Button btnGenera;
+		private Button btnNascondi;
+		private Label lblInfo;
+		private Label lblPasso;
+		private TrackBar trackBarVelocita;
+		private Label lblVelocita;
+		private Button btnInterrompi;
 
-		public FormPrincipale()
+		// Flag per interrompere il processo
+		private bool interrompiProcesso = false;
+		// Indica quando è in corso l'animazione
+		private bool animazioneInCorso = false;
+
+		public Form1()
 		{
 			InitializeComponent();
+			ConfiguraInterfaccia();
 		}
 
-		private void FormPrincipale_Load(object sender, EventArgs e)
+		private void ConfiguraInterfaccia()
 		{
-			// Inizializzazione
-			cmbColore1.Items.AddRange(COLORI);
-			cmbColore2.Items.AddRange(COLORI);
+			// Setup the form
+			this.Text = "Uova e Coniglio";
+			this.Width = 600;
+			this.Height = 550;
+			this.FormBorderStyle = FormBorderStyle.FixedSingle;
+			this.MaximizeBox = false;
 
-			// Imposta alcuni valori predefiniti
-			numUova.Value = numeroTotaleUova;
+			// Create controls
+			lblInfo = new Label
+			{
+				Text = "Simulazione uova e coniglio",
+				Location = new Point(20, 20),
+				AutoSize = true
+			};
 
-			AggiornaInterfaccia();
+			lstFabbrica = new ListBox
+			{
+				Location = new Point(20, 50),
+				Size = new Size(250, 300)
+			};
+
+			lstPrato = new ListBox
+			{
+				Location = new Point(290, 50),
+				Size = new Size(250, 300)
+			};
+
+			btnGenera = new Button
+			{
+				Text = "Genera Uova",
+				Location = new Point(20, 370),
+				Size = new Size(250, 30)
+			};
+
+			btnNascondi = new Button
+			{
+				Text = "Nascondi Uova",
+				Location = new Point(290, 370),
+				Size = new Size(250, 30)
+			};
+
+			lblPasso = new Label
+			{
+				Text = "Passaggio: Nessuna operazione in corso",
+				Location = new Point(20, 410),
+				Size = new Size(520, 20),
+				AutoSize = false
+			};
+
+			lblVelocita = new Label
+			{
+				Text = "Velocità:",
+				Location = new Point(20, 440),
+				AutoSize = true
+			};
+
+			trackBarVelocita = new TrackBar
+			{
+				Location = new Point(80, 435),
+				Size = new Size(200, 45),
+				Minimum = 1,
+				Maximum = 10,
+				Value = 5,
+				TickFrequency = 1,
+				Cursor = Cursors.Hand,
+			};
+
+			btnInterrompi = new Button
+			{
+				Text = "Interrompi",
+				Location = new Point(290, 435),
+				Size = new Size(250, 30),
+				Enabled = false
+			};
+
+			// Add event handlers
+			btnGenera.Click += BtnGenera_Click;
+			btnNascondi.Click += BtnNascondi_Click;
+			btnInterrompi.Click += BtnInterrompi_Click;
+
+			// Add controls to form
+			this.Controls.Add(lblInfo);
+			this.Controls.Add(lstFabbrica);
+			this.Controls.Add(lstPrato);
+			this.Controls.Add(btnGenera);
+			this.Controls.Add(btnNascondi);
+			this.Controls.Add(lblPasso);
+			this.Controls.Add(lblVelocita);
+			this.Controls.Add(trackBarVelocita);
+			this.Controls.Add(btnInterrompi);
+
+			// Add labels
+			Label lblFabbrica = new Label
+			{
+				Text = "Fabbrica:",
+				Location = new Point(20, 35),
+				AutoSize = true
+			};
+
+			Label lblPrato = new Label
+			{
+				Text = "Prato:",
+				Location = new Point(290, 35),
+				AutoSize = true
+			};
+
+			this.Controls.Add(lblFabbrica);
+			this.Controls.Add(lblPrato);
 		}
 
-		private void btnGeneraUova_Click(object sender, EventArgs e)
+		private void BtnGenera_Click(object sender, EventArgs e)
 		{
-			// Pulisci tutte le code e gli stack
+			// Reset
 			fabbrica.Clear();
-			pratoDiUova.Clear();
-			uovaRimandate.Clear();
-			storiaUova.Clear();
-			uovaNascoste.Clear();
+			prato.Clear();
+			pratoVisualizzazione.Clear();
+			AggiornaInterfaccia();
 
-			// Ottieni il numero di uova desiderato
-			numeroTotaleUova = (int)numUova.Value;
+			// Genera un numero pari di uova (per esempio 6)
+			int numeroUova = 4;
 
-			// Crea le metà delle uova (ogni uovo ha due metà di colore)
-			List<string> metaUova = new List<string>();
-			for (int i = 0; i < numeroTotaleUova * 2; i++)
+			for (int i = 0; i < numeroUova; i++)
 			{
-				metaUova.Add(COLORI[random.Next(COLORI.Length)]);
-			}
+				// Scegli due colori casuali
+				Colore colore1 = (Colore)random.Next(Enum.GetValues(typeof(Colore)).Length);
+				Colore colore2 = (Colore)random.Next(Enum.GetValues(typeof(Colore)).Length);
 
-			// Mescola le metà e crea le uova
-			metaUova = metaUova.OrderBy(x => random.Next()).ToList();
-
-			for (int i = 0; i < metaUova.Count; i += 2)
-			{
-				if (i + 1 < metaUova.Count)
-				{
-					Uovo uovo = new Uovo(metaUova[i], metaUova[i + 1]);
-					fabbrica.Enqueue(uovo);
-				}
+				// Crea un nuovo uovo e aggiungilo alla fabbrica
+				Uovo uovo = new Uovo(colore1, colore2);
+				fabbrica.Enqueue(uovo);
 			}
 
 			AggiornaInterfaccia();
-			logTextBox.AppendText($"Generate {fabbrica.Count} uova nella fabbrica.\r\n");
+			lblInfo.Text = $"Generate {numeroUova} uova nella fabbrica";
+			lblPasso.Text = "Passaggio: Uova generate con successo";
 		}
 
-		private void btnPrendiUovo_Click(object sender, EventArgs e)
+		private async void BtnNascondi_Click(object sender, EventArgs e)
 		{
-			if (fabbrica.Count == 0 && uovaRimandate.Count == 0)
+			if (fabbrica.Count == 0)
 			{
-				logTextBox.AppendText("Non ci sono più uova da prendere!\r\n");
+				lblInfo.Text = "Non ci sono uova da nascondere!";
 				return;
 			}
 
-			// Prendi un uovo dalla fabbrica o dalle uova rimandate
-			Uovo uovoCorrente;
-			if (fabbrica.Count > 0)
+			if (animazioneInCorso)
 			{
-				uovoCorrente = fabbrica.Dequeue();
-				logTextBox.AppendText($"Anselmo ha preso un uovo dalla fabbrica: {uovoCorrente}\r\n");
+				lblInfo.Text = "Un'animazione è già in corso, attendere...";
+				return;
+			}
+
+			// Imposta i flag e gli stati dei pulsanti
+			interrompiProcesso = false;
+			animazioneInCorso = true;
+			btnNascondi.Enabled = false;
+			btnGenera.Enabled = false;
+			btnInterrompi.Enabled = true;
+
+			// Avvia il processo di soluzione in un Task separato
+			bool successo = await Task.Run(() => TrovaSoluzione());
+
+			// Reimposta i flag e gli stati dei pulsanti
+			animazioneInCorso = false;
+			btnNascondi.Enabled = true;
+			btnGenera.Enabled = true;
+			btnInterrompi.Enabled = false;
+
+			if (interrompiProcesso)
+			{
+				lblInfo.Text = "Processo interrotto dall'utente.";
+				lblPasso.Text = "Passaggio: Processo interrotto";
+			}
+			else if (successo)
+			{
+				lblInfo.Text = "Tutte le uova sono state nascoste con successo!";
+				lblPasso.Text = "Passaggio: Soluzione completata";
 			}
 			else
 			{
-				uovoCorrente = uovaRimandate.Dequeue();
-				logTextBox.AppendText($"Anselmo ha preso un uovo rimandato: {uovoCorrente}\r\n");
+				lblInfo.Text = "Non è stato possibile nascondere tutte le uova. Alcune rimangono in fabbrica.";
+				lblPasso.Text = "Passaggio: Nessuna soluzione trovata";
 			}
-
-			// Mostra l'uovo corrente nei controlli
-			txtUovoCorrente.Text = uovoCorrente.ToString();
-			cmbColore1.SelectedItem = uovoCorrente.Colore1;
-			cmbColore2.SelectedItem = uovoCorrente.Colore2;
-
-			AggiornaInterfaccia();
 		}
 
-		private void btnNascondi_Click(object sender, EventArgs e)
+		private void BtnInterrompi_Click(object sender, EventArgs e)
 		{
-			if (string.IsNullOrEmpty(txtUovoCorrente.Text))
+			interrompiProcesso = true;
+		}
+
+		private bool TrovaSoluzione()
+		{
+			// Iniziamo con un prato vuoto
+			Invoke(new Action(() =>
 			{
-				logTextBox.AppendText("Non hai ancora preso un uovo!\r\n");
-				return;
-			}
-
-			// Crea l'uovo dai colori selezionati
-			Uovo uovoCorrente = new Uovo(cmbColore1.SelectedItem.ToString(), cmbColore2.SelectedItem.ToString());
-
-			// Controlla se è possibile nascondere l'uovo
-			if (pratoDiUova.Count == 0 || HaColoreInComune(pratoDiUova.Last(), uovoCorrente))
-			{
-				// Prima di nascondere l'uovo, salva lo stato attuale per il backtracking
-				Queue<Uovo> statoAttuale = new Queue<Uovo>(pratoDiUova);
-				storiaUova.Push(statoAttuale);
-
-				// Nascondi l'uovo
-				pratoDiUova.Enqueue(uovoCorrente);
-				uovaNascoste.Push(uovoCorrente);
-
-				logTextBox.AppendText($"Nascosto nel prato: {uovoCorrente}\r\n");
-				txtUovoCorrente.Text = "";
-
+				prato.Clear();
+				pratoVisualizzazione.Clear();
 				AggiornaInterfaccia();
-			}
-			else
-			{
-				// Rimanda l'uovo alla fabbrica
-				uovaRimandate.Enqueue(uovoCorrente);
-				logTextBox.AppendText($"L'uovo {uovoCorrente} non ha colori in comune con l'ultimo - rimandato!\r\n");
-				txtUovoCorrente.Text = "";
+				lblPasso.Text = "Passaggio: Iniziata ricerca soluzione";
+			}));
 
+			// Copiamo la fabbrica originale per non alterarla durante la ricerca
+			List<Uovo> uovaOriginali = new List<Uovo>(fabbrica);
+			fabbrica.Clear();
+
+			foreach (var uovo in uovaOriginali)
+			{
+				fabbrica.Enqueue(uovo);
+			}
+
+			return BacktrackingNascondiUova();
+		}
+
+		private bool BacktrackingNascondiUova()
+		{
+			// Controlla se il processo è stato interrotto
+			if (interrompiProcesso)
+				return false;
+
+			// Ottieni la velocità attuale (inversa - più basso = più lento)
+			int velocita = 0;
+			Invoke(new Action(() => velocita = trackBarVelocita.Value));
+			int pausa = 1100 - (velocita * 100); // Da 1000ms a 100ms
+
+			// Base case: se la fabbrica è vuota, abbiamo trovato una soluzione
+			if (fabbrica.Count == 0)
+				return true;
+
+			// Esaminiamo tutte le uova nella fabbrica
+			int numeroUovaInFabbrica = fabbrica.Count;
+			List<Uovo> uovaSpostate = new List<Uovo>();
+
+			// Copia temporanea della fabbrica per iterare senza alterarla
+			Queue<Uovo> fabbricaTemporanea = new Queue<Uovo>();
+
+			for (int i = 0; i < numeroUovaInFabbrica; i++)
+			{
+				// Controlla se il processo è stato interrotto
+				if (interrompiProcesso)
+					return false;
+
+				Uovo uovoCorrente = fabbrica.Dequeue();
+
+				// Salviamo una copia della coda del prato e della lista di visualizzazione
+				Queue<Uovo> pratoBackup = new Queue<Uovo>(prato);
+				List<Uovo> pratoVisualizzazioneBackup = new List<Uovo>(pratoVisualizzazione);
+
+
+				// Visualizza l'uovo corrente che stiamo valutando
+				bool puoEssereNascosto = pratoVisualizzazione.Count == 0 || uovoCorrente.CondivideColore(pratoVisualizzazione.Last());
+				MostraTentativo(uovoCorrente, puoEssereNascosto);
+				Thread.Sleep(pausa);
+
+				if (puoEssereNascosto)
+				{
+					// Nascondi l'uovo
+					prato.Enqueue(uovoCorrente);
+					pratoVisualizzazione.Add(uovoCorrente);
+
+					// Visualizza lo spostamento
+					MostraSpostamento(uovoCorrente, versoPrato: true);
+					Thread.Sleep(pausa);
+
+					// Ricorsione
+					if (BacktrackingNascondiUova())
+						return true;
+
+					// Backtracking: rimuovi l'ultimo uovo dal prato
+					// Ripristino le code ai valori precedenti
+					prato = pratoBackup;
+					pratoVisualizzazione = pratoVisualizzazioneBackup;
+
+					// Rimetti l'uovo alla fine della fabbrica
+					fabbrica.Enqueue(uovoCorrente);
+
+					// Visualizza il backtracking
+					MostraSpostamento(uovoCorrente, versoPrato: false);
+					Thread.Sleep(pausa);
+				}
+				else
+				{
+					// Rimetti l'uovo alla fine della fabbrica
+					fabbrica.Enqueue(uovoCorrente);
+
+					// Visualizza che l'uovo non può essere spostato e viene rimesso in fabbrica
+					MostraRimessaInFabbrica(uovoCorrente);
+					Thread.Sleep(pausa / 2); // Più veloce perché è solo un'azione informativa
+				}
+			}
+
+			// Se arriviamo qui, non abbiamo trovato una soluzione con l'attuale configurazione
+			return false;
+		}
+
+		private void MostraTentativo(Uovo uovo, bool puoEssereNascosto)
+		{
+			Invoke(new Action(() =>
+			{
+				string messaggio = puoEssereNascosto
+					? $"Tentativo: L'uovo {uovo} può essere spostato nel prato"
+					: $"Tentativo: L'uovo {uovo} NON può essere spostato nel prato";
+
+				lblPasso.Text = messaggio;
+
+				// Aggiorna l'interfaccia per mostrare lo stato attuale
 				AggiornaInterfaccia();
-			}
-		}
 
-		private void btnBacktrack_Click(object sender, EventArgs e)
-		{
-			if (uovaNascoste.Count == 0)
-			{
-				logTextBox.AppendText("Non ci sono uova da rimuovere per il backtracking.\r\n");
-				return;
-			}
-
-			// Rimuovi l'ultimo uovo nascosto
-			Uovo rimosso = uovaNascoste.Pop();
-
-			// Ripristina lo stato precedente del prato
-			if (storiaUova.Count > 0)
-			{
-				pratoDiUova = storiaUova.Pop();
-			}
-			else
-			{
-				pratoDiUova.Clear();
-			}
-
-			// Rimetti l'uovo nella coda delle uova rimandate
-			uovaRimandate.Enqueue(rimosso);
-
-			logTextBox.AppendText($"Backtracking: rimosso {rimosso} e rimesso in coda.\r\n");
-
-			AggiornaInterfaccia();
-		}
-
-		private void btnAutoNascondi_Click(object sender, EventArgs e)
-		{
-			// Algoritmo automatico per nascondere le uova
-			int iterazioni = 0;
-			bool progresso = true;
-
-			while (progresso && iterazioni < 100) // Limitiamo le iterazioni per evitare loop infiniti
-			{
-				progresso = false;
-				iterazioni++;
-
-				// Prova a scorrere tutte le uova disponibili
-				int totalUova = fabbrica.Count + uovaRimandate.Count;
-				for (int i = 0; i < totalUova; i++)
+				// Seleziona l'uovo corrente se possibile
+				if (lstFabbrica.Items.Count > 0)
 				{
-					// Prendi un uovo
-					Uovo uovoCorrente;
-					if (fabbrica.Count > 0)
-					{
-						uovoCorrente = fabbrica.Dequeue();
-					}
-					else if (uovaRimandate.Count > 0)
-					{
-						uovoCorrente = uovaRimandate.Dequeue();
-					}
-					else
-					{
-						break;
-					}
-
-					// Controlla se possiamo nasconderlo
-					if (pratoDiUova.Count == 0 || HaColoreInComune(pratoDiUova.Last(), uovoCorrente))
-					{
-						// Salva lo stato per il backtracking
-						Queue<Uovo> statoAttuale = new Queue<Uovo>(pratoDiUova);
-						storiaUova.Push(statoAttuale);
-
-						// Nascondi l'uovo
-						pratoDiUova.Enqueue(uovoCorrente);
-						uovaNascoste.Push(uovoCorrente);
-						progresso = true;
-
-						logTextBox.AppendText($"Auto: Nascosto nel prato: {uovoCorrente}\r\n");
-					}
-					else
-					{
-						// Rimanda l'uovo
-						uovaRimandate.Enqueue(uovoCorrente);
-					}
+					lstFabbrica.SelectedIndex = 0; // Il primo elemento nella coda
 				}
-
-				// Se non abbiamo fatto progressi ma ci sono ancora uova, fai backtracking
-				if (!progresso && (fabbrica.Count > 0 || uovaRimandate.Count > 0) && uovaNascoste.Count > 0)
-				{
-					btnBacktrack_Click(sender, e); // Esegui backtracking
-					progresso = true; // Continuiamo a provare
-				}
-			}
-
-			if (iterazioni >= 100)
-			{
-				logTextBox.AppendText("Raggiunto il limite di iterazioni nell'auto-nascondimento.\r\n");
-			}
-
-			AggiornaInterfaccia();
+			}));
 		}
 
-		private bool HaColoreInComune(Uovo ultimo, Uovo nuovo)
+		private void MostraSpostamento(Uovo uovo, bool versoPrato)
 		{
-			return ultimo.Colore1 == nuovo.Colore1 ||
-				   ultimo.Colore1 == nuovo.Colore2 ||
-				   ultimo.Colore2 == nuovo.Colore1 ||
-				   ultimo.Colore2 == nuovo.Colore2;
+			Invoke(new Action(() =>
+			{
+				AggiornaInterfaccia();
+
+				if (versoPrato && lstPrato.Items.Count > 0)
+				{
+					lstPrato.SelectedIndex = lstPrato.Items.Count - 1;
+					lblPasso.Text = $"Passaggio: Uovo {uovo} spostato nel prato";
+				}
+				else if (!versoPrato)
+				{
+					if (lstFabbrica.Items.Count > 0)
+					{
+						lstFabbrica.SelectedIndex = lstFabbrica.Items.Count - 1; // L'uovo è stato appena aggiunto alla fine della coda
+					}
+					lblPasso.Text = $"Passaggio: Backtracking - Uovo {uovo} rimesso nella fabbrica";
+				}
+			}));
+		}
+
+		private void MostraRimessaInFabbrica(Uovo uovo)
+		{
+			Invoke(new Action(() =>
+			{
+				AggiornaInterfaccia();
+				lblPasso.Text = $"Passaggio: Uovo {uovo} non compatibile, rimesso in fabbrica";
+			}));
 		}
 
 		private void AggiornaInterfaccia()
 		{
-			// Aggiorna le etichette con i conteggi
-			lblFabbricaCount.Text = $"Uova in fabbrica: {fabbrica.Count}";
-			lblPratoCount.Text = $"Uova nel prato: {pratoDiUova.Count}";
-			lblRimandateCount.Text = $"Uova rimandate: {uovaRimandate.Count}";
-
-			// Aggiorna le liste
+			// Aggiorna la lista della fabbrica
 			lstFabbrica.Items.Clear();
-			foreach (Uovo uovo in fabbrica)
+			foreach (var uovo in fabbrica)
 			{
 				lstFabbrica.Items.Add(uovo.ToString());
 			}
 
+			// Aggiorna la lista del prato
 			lstPrato.Items.Clear();
-			foreach (Uovo uovo in pratoDiUova)
+			foreach (var uovo in prato)
 			{
 				lstPrato.Items.Add(uovo.ToString());
 			}
-
-			lstRimandate.Items.Clear();
-			foreach (Uovo uovo in uovaRimandate)
-			{
-				lstRimandate.Items.Add(uovo.ToString());
-			}
-
-			// Abilita/disabilita i pulsanti in base allo stato
-			btnPrendiUovo.Enabled = (fabbrica.Count > 0 || uovaRimandate.Count > 0);
-			btnNascondi.Enabled = !string.IsNullOrEmpty(txtUovoCorrente.Text);
-			btnBacktrack.Enabled = (uovaNascoste.Count > 0);
-			btnAutoNascondi.Enabled = (fabbrica.Count > 0 || uovaRimandate.Count > 0);
 		}
 
 		private void InitializeComponent()
 		{
-			this.lblTitolo = new System.Windows.Forms.Label();
-			this.numUova = new System.Windows.Forms.NumericUpDown();
-			this.lblNumUova = new System.Windows.Forms.Label();
-			this.btnGeneraUova = new System.Windows.Forms.Button();
-			this.lblFabbricaCount = new System.Windows.Forms.Label();
-			this.lstFabbrica = new System.Windows.Forms.ListBox();
-			this.lstPrato = new System.Windows.Forms.ListBox();
-			this.lblPratoCount = new System.Windows.Forms.Label();
-			this.lstRimandate = new System.Windows.Forms.ListBox();
-			this.lblRimandateCount = new System.Windows.Forms.Label();
-			this.btnPrendiUovo = new System.Windows.Forms.Button();
-			this.btnNascondi = new System.Windows.Forms.Button();
-			this.btnBacktrack = new System.Windows.Forms.Button();
-			this.btnAutoNascondi = new System.Windows.Forms.Button();
-			this.txtUovoCorrente = new System.Windows.Forms.TextBox();
-			this.lblUovoCorrente = new System.Windows.Forms.Label();
-			this.cmbColore1 = new System.Windows.Forms.ComboBox();
-			this.cmbColore2 = new System.Windows.Forms.ComboBox();
-			this.lblColori = new System.Windows.Forms.Label();
-			this.logTextBox = new System.Windows.Forms.TextBox();
-			this.lblLog = new System.Windows.Forms.Label();
-			((System.ComponentModel.ISupportInitialize)(this.numUova)).BeginInit();
 			this.SuspendLayout();
 			// 
-			// lblTitolo
+			// FormUovaEConiglio
 			// 
-			this.lblTitolo.AutoSize = true;
-			this.lblTitolo.Font = new System.Drawing.Font("Microsoft Sans Serif", 16F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.lblTitolo.Location = new System.Drawing.Point(12, 9);
-			this.lblTitolo.Name = "lblTitolo";
-			this.lblTitolo.Size = new System.Drawing.Size(464, 26);
-			this.lblTitolo.TabIndex = 0;
-			this.lblTitolo.Text = "Anselmo il Coniglio - Nascondere le Uova";
-			// 
-			// numUova
-			// 
-			this.numUova.Location = new System.Drawing.Point(151, 51);
-			this.numUova.Maximum = new decimal(new int[] {
-			50,
-			0,
-			0,
-			0});
-			this.numUova.Minimum = new decimal(new int[] {
-			1,
-			0,
-			0,
-			0});
-			this.numUova.Name = "numUova";
-			this.numUova.Size = new System.Drawing.Size(87, 20);
-			this.numUova.TabIndex = 1;
-			this.numUova.Value = new decimal(new int[] {
-			20,
-			0,
-			0,
-			0});
-			// 
-			// lblNumUova
-			// 
-			this.lblNumUova.AutoSize = true;
-			this.lblNumUova.Location = new System.Drawing.Point(16, 53);
-			this.lblNumUova.Name = "lblNumUova";
-			this.lblNumUova.Size = new System.Drawing.Size(129, 13);
-			this.lblNumUova.TabIndex = 2;
-			this.lblNumUova.Text = "Numero di uova da creare:";
-			// 
-			// btnGeneraUova
-			// 
-			this.btnGeneraUova.Location = new System.Drawing.Point(258, 48);
-			this.btnGeneraUova.Name = "btnGeneraUova";
-			this.btnGeneraUova.Size = new System.Drawing.Size(129, 23);
-			this.btnGeneraUova.TabIndex = 3;
-			this.btnGeneraUova.Text = "Genera Uova";
-			this.btnGeneraUova.UseVisualStyleBackColor = true;
-			this.btnGeneraUova.Click += new System.EventHandler(this.btnGeneraUova_Click);
-			// 
-			// lblFabbricaCount
-			// 
-			this.lblFabbricaCount.AutoSize = true;
-			this.lblFabbricaCount.Location = new System.Drawing.Point(16, 92);
-			this.lblFabbricaCount.Name = "lblFabbricaCount";
-			this.lblFabbricaCount.Size = new System.Drawing.Size(93, 13);
-			this.lblFabbricaCount.TabIndex = 4;
-			this.lblFabbricaCount.Text = "Uova in fabbrica: 0";
-			// 
-			// lstFabbrica
-			// 
-			this.lstFabbrica.FormattingEnabled = true;
-			this.lstFabbrica.Location = new System.Drawing.Point(19, 108);
-			this.lstFabbrica.Name = "lstFabbrica";
-			this.lstFabbrica.Size = new System.Drawing.Size(150, 173);
-			this.lstFabbrica.TabIndex = 5;
-			// 
-			// lstPrato
-			// 
-			this.lstPrato.FormattingEnabled = true;
-			this.lstPrato.Location = new System.Drawing.Point(184, 108);
-			this.lstPrato.Name = "lstPrato";
-			this.lstPrato.Size = new System.Drawing.Size(150, 173);
-			this.lstPrato.TabIndex = 7;
-			// 
-			// lblPratoCount
-			// 
-			this.lblPratoCount.AutoSize = true;
-			this.lblPratoCount.Location = new System.Drawing.Point(181, 92);
-			this.lblPratoCount.Name = "lblPratoCount";
-			this.lblPratoCount.Size = new System.Drawing.Size(81, 13);
-			this.lblPratoCount.TabIndex = 6;
-			this.lblPratoCount.Text = "Uova nel prato: 0";
-			// 
-			// lstRimandate
-			// 
-			this.lstRimandate.FormattingEnabled = true;
-			this.lstRimandate.Location = new System.Drawing.Point(349, 108);
-			this.lstRimandate.Name = "lstRimandate";
-			this.lstRimandate.Size = new System.Drawing.Size(150, 173);
-			this.lstRimandate.TabIndex = 9;
-			// 
-			// lblRimandateCount
-			// 
-			this.lblRimandateCount.AutoSize = true;
-			this.lblRimandateCount.Location = new System.Drawing.Point(346, 92);
-			this.lblRimandateCount.Name = "lblRimandateCount";
-			this.lblRimandateCount.Size = new System.Drawing.Size(90, 13);
-			this.lblRimandateCount.TabIndex = 8;
-			this.lblRimandateCount.Text = "Uova rimandate: 0";
-			// 
-			// btnPrendiUovo
-			// 
-			this.btnPrendiUovo.Location = new System.Drawing.Point(21, 309);
-			this.btnPrendiUovo.Name = "btnPrendiUovo";
-			this.btnPrendiUovo.Size = new System.Drawing.Size(143, 23);
-			this.btnPrendiUovo.TabIndex = 10;
-			this.btnPrendiUovo.Text = "Prendi un Uovo";
-			this.btnPrendiUovo.UseVisualStyleBackColor = true;
-			this.btnPrendiUovo.Click += new System.EventHandler(this.btnPrendiUovo_Click);
-			// 
-			// btnNascondi
-			// 
-			this.btnNascondi.Location = new System.Drawing.Point(185, 309);
-			this.btnNascondi.Name = "btnNascondi";
-			this.btnNascondi.Size = new System.Drawing.Size(148, 23);
-			this.btnNascondi.TabIndex = 11;
-			this.btnNascondi.Text = "Nascondi l\'Uovo";
-			this.btnNascondi.UseVisualStyleBackColor = true;
-			this.btnNascondi.Click += new System.EventHandler(this.btnNascondi_Click);
-			// 
-			// btnBacktrack
-			// 
-			this.btnBacktrack.Location = new System.Drawing.Point(356, 309);
-			this.btnBacktrack.Name = "btnBacktrack";
-			this.btnBacktrack.Size = new System.Drawing.Size(143, 23);
-			this.btnBacktrack.TabIndex = 12;
-			this.btnBacktrack.Text = "Backtrack";
-			this.btnBacktrack.UseVisualStyleBackColor = true;
-			this.btnBacktrack.Click += new System.EventHandler(this.btnBacktrack_Click);
-			// 
-			// btnAutoNascondi
-			// 
-			this.btnAutoNascondi.Location = new System.Drawing.Point(19, 388);
-			this.btnAutoNascondi.Name = "btnAutoNascondi";
-			this.btnAutoNascondi.Size = new System.Drawing.Size(480, 32);
-			this.btnAutoNascondi.TabIndex = 13;
-			this.btnAutoNascondi.Text = "Nascondi Automaticamente";
-			this.btnAutoNascondi.UseVisualStyleBackColor = true;
-			this.btnAutoNascondi.Click += new System.EventHandler(this.btnAutoNascondi_Click);
-			// 
-			// txtUovoCorrente
-			// 
-			this.txtUovoCorrente.Location = new System.Drawing.Point(74, 342);
-			this.txtUovoCorrente.Name = "txtUovoCorrente";
-			this.txtUovoCorrente.ReadOnly = true;
-			this.txtUovoCorrente.Size = new System.Drawing.Size(90, 20);
-			this.txtUovoCorrente.TabIndex = 14;
-			// 
-			// lblUovoCorrente
-			// 
-			this.lblUovoCorrente.AutoSize = true;
-			this.lblUovoCorrente.Location = new System.Drawing.Point(16, 345);
-			this.lblUovoCorrente.Name = "lblUovoCorrente";
-			this.lblUovoCorrente.Size = new System.Drawing.Size(52, 13);
-			this.lblUovoCorrente.TabIndex = 15;
-			this.lblUovoCorrente.Text = "In mano:";
-			// 
-			// cmbColore1
-			// 
-			this.cmbColore1.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-			this.cmbColore1.FormattingEnabled = true;
-			this.cmbColore1.Location = new System.Drawing.Point(219, 342);
-			this.cmbColore1.Name = "cmbColore1";
-			this.cmbColore1.Size = new System.Drawing.Size(91, 21);
-			this.cmbColore1.TabIndex = 16;
-			// 
-			// cmbColore2
-			// 
-			this.cmbColore2.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-			this.cmbColore2.FormattingEnabled = true;
-			this.cmbColore2.Location = new System.Drawing.Point(316, 342);
-			this.cmbColore2.Name = "cmbColore2";
-			this.cmbColore2.Size = new System.Drawing.Size(91, 21);
-			this.cmbColore2.TabIndex = 17;
-			// 
-			// lblColori
-			// 
-			this.lblColori.AutoSize = true;
-			this.lblColori.Location = new System.Drawing.Point(177, 345);
-			this.lblColori.Name = "lblColori";
-			this.lblColori.Size = new System.Drawing.Size(36, 13);
-			this.lblColori.TabIndex = 18;
-			this.lblColori.Text = "Colori:";
-			// 
-			// logTextBox
-			// 
-			this.logTextBox.Location = new System.Drawing.Point(523, 53);
-			this.logTextBox.Multiline = true;
-			this.logTextBox.Name = "logTextBox";
-			this.logTextBox.ReadOnly = true;
-			this.logTextBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-			this.logTextBox.Size = new System.Drawing.Size(265, 367);
-			this.logTextBox.TabIndex = 19;
-			// 
-			// lblLog
-			// 
-			this.lblLog.AutoSize = true;
-			this.lblLog.Location = new System.Drawing.Point(520, 37);
-			this.lblLog.Name = "lblLog";
-			this.lblLog.Size = new System.Drawing.Size(25, 13);
-			this.lblLog.TabIndex = 20;
-			this.lblLog.Text = "Log";
-			// 
-			// FormPrincipale
-			// 
-			this.ClientSize = new System.Drawing.Size(800, 450);
-			this.Controls.Add(this.lblLog);
-			this.Controls.Add(this.logTextBox);
-			this.Controls.Add(this.lblColori);
-			this.Controls.Add(this.cmbColore2);
-			this.Controls.Add(this.cmbColore1);
-			this.Controls.Add(this.lblUovoCorrente);
-			this.Controls.Add(this.txtUovoCorrente);
-			this.Controls.Add(this.btnAutoNascondi);
-			this.Controls.Add(this.btnBacktrack);
-			this.Controls.Add(this.btnNascondi);
-			this.Controls.Add(this.btnPrendiUovo);
-			this.Controls.Add(this.lstRimandate);
-			this.Controls.Add(this.lblRimandateCount);
-			this.Controls.Add(this.lstPrato);
-			this.Controls.Add(this.lblPratoCount);
-			this.Controls.Add(this.lstFabbrica);
-			this.Controls.Add(this.lblFabbricaCount);
-			this.Controls.Add(this.btnGeneraUova);
-			this.Controls.Add(this.lblNumUova);
-			this.Controls.Add(this.numUova);
-			this.Controls.Add(this.lblTitolo);
-			this.Name = "FormPrincipale";
-			this.Text = "Anselmo il Coniglio Pasquale";
-			this.Load += new System.EventHandler(this.FormPrincipale_Load);
-			((System.ComponentModel.ISupportInitialize)(this.numUova)).EndInit();
+			this.ClientSize = new System.Drawing.Size(278, 244);
+			this.Name = "FormUovaEConiglio";
 			this.ResumeLayout(false);
-			this.PerformLayout();
-		}
-
-		private System.Windows.Forms.Label lblTitolo;
-		private System.Windows.Forms.NumericUpDown numUova;
-		private System.Windows.Forms.Label lblNumUova;
-		private System.Windows.Forms.Button btnGeneraUova;
-		private System.Windows.Forms.Label lblFabbricaCount;
-		private System.Windows.Forms.ListBox lstFabbrica;
-		private System.Windows.Forms.ListBox lstPrato;
-		private System.Windows.Forms.Label lblPratoCount;
-		private System.Windows.Forms.ListBox lstRimandate;
-		private System.Windows.Forms.Label lblRimandateCount;
-		private System.Windows.Forms.Button btnPrendiUovo;
-		private System.Windows.Forms.Button btnNascondi;
-		private System.Windows.Forms.Button btnBacktrack;
-		private System.Windows.Forms.Button btnAutoNascondi;
-		private System.Windows.Forms.TextBox txtUovoCorrente;
-		private System.Windows.Forms.Label lblUovoCorrente;
-		private System.Windows.Forms.ComboBox cmbColore1;
-		private System.Windows.Forms.ComboBox cmbColore2;
-		private System.Windows.Forms.Label lblColori;
-		private System.Windows.Forms.TextBox logTextBox;
-		private System.Windows.Forms.Label lblLog;
-	}
-
-	public class Uovo
-	{
-		public string Colore1 { get; private set; }
-		public string Colore2 { get; private set; }
-
-		public Uovo(string colore1, string colore2)
-		{
-			Colore1 = colore1;
-			Colore2 = colore2;
-		}
-
-		public override string ToString()
-		{
-			return $"{Colore1}-{Colore2}";
 		}
 	}
-
-	
 }

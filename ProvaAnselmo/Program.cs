@@ -1,4 +1,4 @@
-﻿using AnselmoConiglioProgetto;
+﻿using ProvaAnselmo;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,7 +17,7 @@ namespace ProvaAnselmo
 		{
 			Application.EnableVisualStyles();
 			Application.SetCompatibleTextRenderingDefault(false);
-			Application.Run(new FormPrincipale());
+			Application.Run(new Form1());
 		}
 	}
 }
