@@ -15,9 +15,9 @@ Anselmo's Happy Easter è una simulazione in cui potrai vestire i panni di Ansel
 - UovoControl: permette di visualizzare le uova a livello grafico.
 - ContenitoreUova: permette di visualizzare gruppi di uova.
 - Form1: form principale che gestisce l'interfaccia utente e  l'algoritmo di backtracking.
-- FormMenu: Menu dell'applicazione, che permette di inizializzarla
-- FormLogger: Form separato per mostrare il log delle operazioni (non incluso nei frammenti di codice forniti).
+- FormMenu: menu dell'applicazione, che permette di inizializzarla
+- FormLogger: form separato per mostrare il log delle operazioni (non incluso nei frammenti di codice forniti).
 ## Autore
 - [@mameledss](https://www.github.com/mameledss)
 ## Readme
-- Readme realizzato con https://readme.so/
+- Readme realizzato con https://readme.so
