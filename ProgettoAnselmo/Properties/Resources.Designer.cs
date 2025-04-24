@@ -73,6 +73,16 @@ namespace ProgettoAnselmo.Properties {
         /// <summary>
         ///   Cerca una risorsa localizzata di tipo System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap NastroPrato2 {
+            get {
+                object obj = ResourceManager.GetObject("NastroPrato2", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una risorsa localizzata di tipo System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap Pulsante {
             get {
                 object obj = ResourceManager.GetObject("Pulsante", resourceCulture);

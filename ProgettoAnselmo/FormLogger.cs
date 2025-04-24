@@ -12,29 +12,26 @@ namespace ProgettoAnselmo
 {
 	public partial class FormLogger : Form
 	{
-		private ListBox lstLog;
+		private ListBox lstLog; 
 		private Button btnClear;
 		private Label lblTitolo;
-
 		public FormLogger()
 		{
 			InitializeComponent();
-
-			// Stile generale
-			this.Text = "Logger";
-			this.Width = 550;
-			this.Height = 450;
-			this.FormBorderStyle = FormBorderStyle.FixedSingle;
-			this.MaximizeBox = false;
-			this.BackColor = Color.FromArgb(30, 30, 30);
-			this.Font = new Font("Consolas", 10);
-			this.ForeColor = Color.Black;
+			Text = "Anselmo's Diary";
+			Width = 600;
+			Height = 460;
+			BackColor = ColorTranslator.FromHtml("#fffdd0");
+			Font = new Font(Font.FontFamily, 10);
+			ForeColor = Color.Black;
+			FormBorderStyle = FormBorderStyle.FixedSingle;
+			MaximizeBox = false;
 
 			lblTitolo = new Label
 			{
-				Text = "Registro Attività",
+				Text = "Actions",
 				Font = new Font("Segoe UI", 14, FontStyle.Bold),
-				ForeColor = Color.White,
+				ForeColor = ColorTranslator.FromHtml("#664f48"),
 				AutoSize = true,
 				Location = new Point(20, 15)
 			};
@@ -42,9 +39,9 @@ namespace ProgettoAnselmo
 			lstLog = new ListBox
 			{
 				Location = new Point(20, 50),
-				Size = new Size(490, 300),
-				BackColor = Color.FromArgb(45, 45, 45),
-				ForeColor = Color.White,
+				Size = new Size(540, 310),
+				BackColor = ColorTranslator.FromHtml("#e2d2ff"),
+				ForeColor = ColorTranslator.FromHtml("#664f48"),
 				BorderStyle = BorderStyle.FixedSingle
 			};
 
@@ -54,8 +51,8 @@ namespace ProgettoAnselmo
 				Location = new Point(20, 370),
 				Size = new Size(120, 30),
 				FlatStyle = FlatStyle.Flat,
-				BackColor = Color.FromArgb(60, 60, 60),
-				ForeColor = Color.White
+				BackColor = ColorTranslator.FromHtml("#749951"),
+				ForeColor = ColorTranslator.FromHtml("#fffdd0")
 			};
 
 			btnClear.FlatAppearance.BorderSize = 0;
@@ -66,14 +63,20 @@ namespace ProgettoAnselmo
 			this.Controls.Add(btnClear);
 		}
 
+
+		//metodo per scrivere un messaggio nel logger
 		public void AggiungiMessaggio(string messaggio)
 		{
+			//se il metodo è chiamato da un thread diverso da quello principale dell'interfaccia grafica
 			if (InvokeRequired)
 			{
+				//usa Invoke per rieseguire il metodo sul thread dell'interfaccia grafica
 				Invoke(new Action(() => AggiungiMessaggio(messaggio)));
 				return;
 			}
+			//aggiunge il messaggio alla ListBox
 			lstLog.Items.Add($"- {messaggio}");
+			//scorre la ListBox verso il basso per mostrare l'ultimo elemento inserito
 			lstLog.TopIndex = lstLog.Items.Count - 1;
 		}
 	}

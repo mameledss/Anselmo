@@ -22,18 +22,15 @@ namespace ProgettoAnselmo
 			//tlpTesto2.BackColor = Color.Transparent;
 			tlpTestoSelect.BackColor = Color.Transparent;
 		}
-
-		
-
 		private void button1_Click_1(object sender, EventArgs e)
 		{
-			// Crea una nuova istanza di Form1
+			//crea una nuova istanza di Form1
 			Form1 form1 = new Form1();
-			// Chiudi il form menu
+			//chiude il form del menu
 			this.Close();
-			// Mostra Form1
+			//mostra Form1
 			form1.Show();
-			// Quando Form1 viene chiuso, termina l'applicazione
+			//quando Form1 viene chiuso, termina l'applicazione
 			form1.FormClosed += (s, args) => Application.Exit();
 		}
 	}

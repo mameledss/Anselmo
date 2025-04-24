@@ -28,6 +28,7 @@
 		/// </summary>
 		private void InitializeComponent()
 		{
+			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormMenu));
 			tlpBasso = new TableLayoutPanel();
 			button1 = new Button();
 			tlpTitoloContenitore = new TableLayoutPanel();
@@ -45,11 +46,12 @@
 			tlpBasso.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 45.4545441F));
 			tlpBasso.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 27.2727261F));
 			tlpBasso.Controls.Add(button1, 1, 0);
+			tlpBasso.Dock = DockStyle.Bottom;
 			tlpBasso.Location = new Point(0, 325);
 			tlpBasso.Name = "tlpBasso";
 			tlpBasso.RowCount = 1;
 			tlpBasso.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-			tlpBasso.Size = new Size(802, 125);
+			tlpBasso.Size = new Size(800, 125);
 			tlpBasso.TabIndex = 0;
 			// 
 			// button1
@@ -62,7 +64,7 @@
 			button1.Location = new Point(278, 30);
 			button1.Margin = new Padding(60, 30, 60, 30);
 			button1.Name = "button1";
-			button1.Size = new Size(244, 65);
+			button1.Size = new Size(243, 65);
 			button1.TabIndex = 0;
 			button1.UseVisualStyleBackColor = true;
 			button1.Click += button1_Click_1;
@@ -118,8 +120,11 @@
 			ClientSize = new Size(800, 450);
 			Controls.Add(tlpTitoloContenitore);
 			Controls.Add(tlpBasso);
+			Icon = (Icon)resources.GetObject("$this.Icon");
+			MinimumSize = new Size(800, 480);
 			Name = "FormMenu";
-			Text = "FormMenu";
+			StartPosition = FormStartPosition.CenterScreen;
+			Text = "Anselmo's Menu";
 			tlpBasso.ResumeLayout(false);
 			tlpBasso.PerformLayout();
 			tlpTitoloContenitore.ResumeLayout(false);

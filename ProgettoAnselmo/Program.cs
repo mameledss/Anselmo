@@ -10,11 +10,11 @@ namespace ProgettoAnselmo
 		{
 			ApplicationConfiguration.Initialize();
 
-			// Crea l'istanza del form menu
+			//crea l'istanza del form del menu
 			FormMenu formMenu = new FormMenu();
-			formMenu.Show();
+			formMenu.Show(); //lo mostra
 
-			// Esegui il loop principale dell'applicazione senza specificare un form principale
+			//esegue l'applicazione
 			Application.Run();
 		}
 	}

@@ -1,219 +1,216 @@
-
+using Microsoft.VisualBasic.Logging;
+using System.Drawing.Drawing2D;
+using System.Media;
+using System.Windows.Forms;
 
 namespace ProgettoAnselmo
 {
-	public partial class Form1 : Form
+	public partial class Form1 : Form 
 	{
-		private Queue<Uovo> fabbrica = new Queue<Uovo>();
-		private Queue<Uovo> prato = new Queue<Uovo>();
-		private List<Uovo> pratoVisualizzazione = new List<Uovo>();
+		private Queue<Uovo> fabbrica = new Queue<Uovo>(); //coda per memorizzare le uova nella fabbrica
+		private Queue<Uovo> prato = new Queue<Uovo>(); //coda per memorizzare le uova nel prato
+		private List<Uovo> pratoVisualizzazione = new List<Uovo>(); //lista per la visualizzazione delle uova nel prato
 
-		// Lista dei colori disponibili
-		private static readonly Color[] ColoriDisponibili = new Color[]
+		private static readonly Color[] ColoriDisponibili = new Color[] //array di colori per le uova
 		{
-			Uovo.ColoreDaHex("#93c808"), //verde
-			Uovo.ColoreDaHex("#fffdd0"), //giallo
-			Uovo.ColoreDaHex("#ffd4d4"), //rosa
-			Uovo.ColoreDaHex("#ff9c7e"), //arancione
-			Uovo.ColoreDaHex("#d1b8ff"), //viola
-			Uovo.ColoreDaHex("#dee4ff")  //azzurro
+			Uovo.ColoreDaHex("#93c808"), // verde
+			Uovo.ColoreDaHex("#fffdd0"), // giallo
+			Uovo.ColoreDaHex("#ffd4d4"), // rosa
+			Uovo.ColoreDaHex("#ff9c7e"), // arancione
+			Uovo.ColoreDaHex("#d1b8ff"), // viola
+			Uovo.ColoreDaHex("#dee4ff")  // azzurro
 		};
-
 		private Random random = new Random();
-		private ContenitoreUova contenitoreFabbrica;
-		private ContenitoreUova contenitorePrato;
-		private Button btnGenera;
-		private Button btnNascondi;
-		private Button btnInterrompi;
-		private NumericUpDown numUova;
-		private Label lblNumUova;
-		private FormLogger logger;
+		private ContenitoreUova contenitoreFabbrica; //controlli per visualizzare le uova nella fabbrica	 
+		private ContenitoreUova contenitorePrato; //e nel prato
+												  
+		private Button btnGenera; //pulsante per generare le uova
+		private Button btnNascondi; //pulsante per nascondere le uova	
+		private Button btnInterrompi; //pulsante per interrompere il processo
+		private NumericUpDown numUova; //controllo per selezionare il numero di uova da generare						   
+		private Label lblNumUova; //etichetta per il controllo numerico
+		private FormLogger logger; //form logger
 
-		private MenuStrip menuStrip;
-		private ToolStripMenuItem menuImpostazioni;
-		private ToolStripMenuItem menuVelocita;
-		private ToolStripComboBox comboVelocita;
+		private MenuStrip menuStrip; //elementi del menu
+		private ToolStripMenuItem menuImpostazioni; //impostazioni del menu
+		private ToolStripMenuItem menuVelocita; //sottomenu per velocità dell'animazione
+		private ToolStripMenuItem menuMusica; //impostazioni musica di sottofondo
+		private ToolStripMenuItem menuCrediti; //autore
+		private ToolStripComboBox comboVelocita; //comboBox per selezionare la velocità
+		private ToolStripMenuItem playSound;
+		private ToolStripMenuItem stopSound;
+		private ToolStripMenuItem credits;
+		private SoundPlayer player;
 
-		// Flag per interrompere il processo
-		private bool interrompiProcesso = false;
-		// Indica quando è in corso l'animazione
-		private bool animazioneInCorso = false;
+		private bool interrompiProcesso = false; //flag per controllare l'interruzione del processo di backtracking
+		private bool animazioneInCorso = false; //flag per indicare se un'animazione è in corso
 
-		// Variabili per il ridimensionamento
-		private float scaleFactorX = 1.0f;
-		private float scaleFactorY = 1.0f;
-		private Size originalFormSize;
+		//variabili per il ridimensionamento dell'interfaccia utente
+		private float fattScalaX = 1.0f; //fattore di scala orizzontale
+		private float fattScalaY = 1.0f; //e verticale
+		private Size dimOrigin; //dimensioni originali form
 		public Form1()
 		{
 			InitializeComponent();
 			ConfiguraInterfaccia();
-			logger = new();
-			logger.Show();
+			logger = new(); //crea una nuova istanza del FormLogger
+			logger.Show(); //mostra il form di log
 
-			// Salva le dimensioni originali del form
-			originalFormSize = this.Size;
+			//salva le dimensioni originali del form per il calcolo del ridimensionamento
+			dimOrigin = this.Size;
 
-			// Aggiungi gestore eventi per il ridimensionamento del form
+			//aggiunge un gestore eventi per il ridimensionamento del form
 			this.Resize += Form1_Resize;
 		}
-		private void Form1_Resize(object sender, EventArgs e)
+		private void Form1_Resize(object sender, EventArgs e) //gestore eventi per ridimensionamento form
 		{
-			if (originalFormSize.Width == 0 || originalFormSize.Height == 0)
-				return;
+			//se le dimensioni originali non sono state impostate
+			if (dimOrigin.Width == 0 || dimOrigin.Height == 0)
+				return; //ritorna
 
-			// Calcola i fattori di scala
-			scaleFactorX = (float)this.Width / originalFormSize.Width;
-			scaleFactorY = (float)this.Height / originalFormSize.Height;
+			//calcola i fattori di scala basati sulle dimensioni originali e correnti del form
+			fattScalaX = (float)this.Width / dimOrigin.Width;
+			fattScalaY = (float)this.Height / dimOrigin.Height;
 
-			// Ridimensiona tutti i controlli
+			//ridimensiona tutti i controlli in base ai nuovi fattori di scala
 			RidimensionaControlli();
 		}
-
-		private void RidimensionaControlli()
+		private void RidimensionaControlli() //metodo per ridimensionare i controlli
 		{
-			// Ricalcola le posizioni e dimensioni dei componenti
+			//ridimensiona e riposiziona il contenitore della fabbrica
 			if (contenitoreFabbrica != null)
 			{
-				contenitoreFabbrica.Location = new Point((int)(20 * scaleFactorX), (int)(60 * scaleFactorY));
-				contenitoreFabbrica.Size = new Size((int)(840 * scaleFactorX), (int)(160 * scaleFactorY));
+				contenitoreFabbrica.Location = new Point((int)(20 * fattScalaX), (int)(60 * fattScalaY));
+				contenitoreFabbrica.Size = new Size((int)(840 * fattScalaX), (int)(160 * fattScalaY));
 			}
-
+			//del prato
 			if (contenitorePrato != null)
 			{
-				contenitorePrato.Location = new Point((int)(20 * scaleFactorX), (int)(210 * scaleFactorY));
-				contenitorePrato.Size = new Size((int)(840 * scaleFactorX), (int)(160 * scaleFactorY));
+				contenitorePrato.Location = new Point((int)(20 * fattScalaX), (int)(220 * fattScalaY));
+				contenitorePrato.Size = new Size((int)(840 * fattScalaX), (int)(160 * fattScalaY));
 			}
+			int contrY = (int)(480 * fattScalaY); //calcola la posizione Y per i controlli inferiori
 
-			int controlsY = (int)(480 * scaleFactorY);
-
-			if (lblNumUova != null)
+			if (lblNumUova != null) //ridimensiona e riposiziona l'etichetta per il controllo numerico
 			{
-				lblNumUova.Location = new Point((int)(20 * scaleFactorX), controlsY + 9);
-				lblNumUova.Font = new Font(Font.FontFamily, 10 * Math.Min(scaleFactorX, scaleFactorY));
+				lblNumUova.Location = new Point((int)(20 * fattScalaX), contrY + 9);
+				lblNumUova.Font = new Font(Font.FontFamily, 10 * Math.Min(fattScalaX, fattScalaY));
 			}
 
-			if (numUova != null)
+			if (numUova != null) //ridimensiona e riposiziona il controllo numerico
 			{
-				numUova.Location = new Point((int)(170 * scaleFactorX), controlsY + 4);
-				numUova.Size = new Size((int)(60 * scaleFactorX), (int)(25 * scaleFactorY));
-				numUova.Font = new Font(Font.FontFamily, 10 * Math.Min(scaleFactorX, scaleFactorY));
+				numUova.Location = new Point((int)(170 * fattScalaX), contrY + 4);
+				numUova.Size = new Size((int)(60 * fattScalaX), (int)(25 * fattScalaY));
+				numUova.Font = new Font(Font.FontFamily, 10 * Math.Min(fattScalaX, fattScalaY));
 			}
+			//calcola dimensioni e spaziatura per i pulsanti
+			int largPuls = (int)(140 * fattScalaX);
+			int spazioPuls = (int)(20 * fattScalaX);
+			int primoPulsX = (int)(250 * fattScalaX);
 
-			int buttonWidth = (int)(140 * scaleFactorX);
-			int buttonSpacing = (int)(20 * scaleFactorX);
-			int firstButtonX = (int)(250 * scaleFactorX);
-
-			if (btnGenera != null)
+			if (btnGenera != null) //ridimensiona e riposiziona il pulsante per generare le uova
 			{
-				btnGenera.Location = new Point(firstButtonX, controlsY);
-				btnGenera.Size = new Size(buttonWidth, (int)(40 * scaleFactorY));
-				btnGenera.Font = new Font(Font.FontFamily, 10 * Math.Min(scaleFactorX, scaleFactorY));
+				btnGenera.Location = new Point(primoPulsX, contrY);
+				btnGenera.Size = new Size(largPuls, (int)(40 * fattScalaY));
+				btnGenera.Font = new Font(Font.FontFamily, 10 * Math.Min(fattScalaX, fattScalaY));
 			}
 
-			if (btnNascondi != null)
+			if (btnNascondi != null) //il pulsante per nascondere le uova
 			{
-				btnNascondi.Location = new Point(firstButtonX + buttonWidth + buttonSpacing, controlsY);
-				btnNascondi.Size = new Size(buttonWidth, (int)(40 * scaleFactorY));
-				btnNascondi.Font = new Font(Font.FontFamily, 10 * Math.Min(scaleFactorX, scaleFactorY));
+				btnNascondi.Location = new Point(primoPulsX + largPuls + spazioPuls, contrY);
+				btnNascondi.Size = new Size(largPuls, (int)(40 * fattScalaY));
+				btnNascondi.Font = new Font(Font.FontFamily, 10 * Math.Min(fattScalaX, fattScalaY));
 			}
 
-			if (btnInterrompi != null)
+			if (btnInterrompi != null) //il pulsante per interrompere
 			{
-				btnInterrompi.Location = new Point(firstButtonX + (buttonWidth + buttonSpacing) * 2, controlsY);
-				btnInterrompi.Size = new Size(buttonWidth, (int)(40 * scaleFactorY));
-				btnInterrompi.Font = new Font(Font.FontFamily, 10 * Math.Min(scaleFactorX, scaleFactorY));
+				btnInterrompi.Location = new Point(primoPulsX + (largPuls + spazioPuls) * 2, contrY);
+				btnInterrompi.Size = new Size(largPuls, (int)(40 * fattScalaY));
+				btnInterrompi.Font = new Font(Font.FontFamily, 10 * Math.Min(fattScalaX, fattScalaY));
 			}
-			AggiornaInterfaccia();
+
+			AggiornaInterfaccia(); //aggiorna l'interfaccia per mostrare i cambiamenti
 		}
-		private void ConfiguraInterfaccia()
+		private void ConfiguraInterfaccia() //metodo per configurare l'interfaccia utente
 		{
-			// Setup the form
-			this.Text = "Uova e Coniglio";
+			this.Text = "Anselmo's Lawn";
 			this.Width = 900;
 			this.Height = 580;
+			this.FormBorderStyle = FormBorderStyle.Sizable; //form ridimensionabile
+			this.MinimumSize = new Size(900, 580); //dimensioni minime
 
-			// Imposta il form come ridimensionabile
-			this.FormBorderStyle = FormBorderStyle.Sizable;
-			this.MinimumSize = new Size(900, 580);  // Dimensione minima
+			int contrY = 480;
+			ConfiguraMenu(); //configura il menu principale
 
-			int controlsY = 480;
-
-			// Create controls
-			ConfiguraMenu();
-
-			// Contenitori per uova (orizzontali)
-			contenitoreFabbrica = new ContenitoreUova("Fabbrica:")
+			contenitoreFabbrica = new ContenitoreUova("Factory:") //contenitore per le uova nella fabbrica
 			{
 				Location = new Point(20, 60),
 				Size = new Size(840, 160),
 				BackColor = Color.Transparent,
 				BorderStyle = BorderStyle.None
 			};
-
-			contenitorePrato = new ContenitoreUova("Prato:")
+			contenitorePrato = new ContenitoreUova("Lawn:") //contenitore per le uova nel prato
 			{
-				Location = new Point(20, 210),
+				Location = new Point(20, 220),
 				Size = new Size(840, 160),
 				BackColor = Color.Transparent,
 				BorderStyle = BorderStyle.None
 			};
-
-			lblNumUova = new Label
+			lblNumUova = new Label //etichetta per il controllo numerico
 			{
-				Text = "Numero di uova:",
-				Location = new Point(20, controlsY + 9),
+				Text = "Number of Eggs:",
+				Location = new Point(20, contrY + 9),
 				AutoSize = true,
 				Font = new Font(Font.FontFamily, 10)
 			};
 
-			numUova = new NumericUpDown
+			numUova = new NumericUpDown //controllo per selezionare il numero di uova
 			{
-				Location = new Point(170, controlsY + 4),
+				Location = new Point(170, contrY + 4),
 				Size = new Size(60, 25),
-				Minimum = 2,
-				Maximum = 50,
-				Value = 4,
+				Minimum = 2, //numero minimo di uova
+				Maximum = 20, //e massimo
+				Value = 5, //valore predefinito
 				Font = new Font(Font.FontFamily, 10)
 			};
+			//dimensioni e spaziatura per i pulsanti
+			int largPuls = 140;
+			int spazioPuls = 20;
+			int primoPulsX = 250;
 
-			int buttonWidth = 140;
-			int buttonSpacing = 20;
-			int firstButtonX = 250;
-
-			btnGenera = new Button
+			btnGenera = new Button //pulsante per generare le uova
 			{
-				Text = "Genera Uova",
-				Location = new Point(firstButtonX, controlsY),
-				Size = new Size(buttonWidth, 40),
+				Text = "Generate Eggs",
+				Location = new Point(primoPulsX, contrY),
+				Size = new Size(largPuls, 40),
 				Font = new Font(Font.FontFamily, 10),
 				Cursor = Cursors.Hand
 			};
 
-			btnNascondi = new Button
+			btnNascondi = new Button //pulsante per nascondere le uova
 			{
-				Text = "Nascondi Uova",
-				Location = new Point(firstButtonX + buttonWidth + buttonSpacing, controlsY),
-				Size = new Size(buttonWidth, 40),
+				Text = "Hide Eggs",
+				Location = new Point(primoPulsX + largPuls + spazioPuls, contrY),
+				Size = new Size(largPuls, 40),
 				Font = new Font(Font.FontFamily, 10),
 				Cursor = Cursors.Hand
 			};
 
-			btnInterrompi = new Button
+			btnInterrompi = new Button //pulsante per interrompere il processo
 			{
-				Text = "Interrompi",
-				Location = new Point(firstButtonX + (buttonWidth + buttonSpacing) * 2, controlsY),
-				Size = new Size(buttonWidth, 40),
-				Enabled = false,
+				Text = "Stop",
+				Location = new Point(primoPulsX + (largPuls + spazioPuls) * 2, contrY),
+				Size = new Size(largPuls, 40),
+				Enabled = false, //inizialmente disabilitato 
 				Font = new Font(Font.FontFamily, 10),
 				Cursor = Cursors.Hand
 			};
-
-			// Add event handlers
+			//gestori eventi per pulsanti
 			btnGenera.Click += BtnGenera_Click;
 			btnNascondi.Click += BtnNascondi_Click;
 			btnInterrompi.Click += BtnInterrompi_Click;
 
-			// Add controls to form
+			//aggiunge i controlli al form
 			this.Controls.Add(contenitoreFabbrica);
 			this.Controls.Add(contenitorePrato);
 			this.Controls.Add(lblNumUova);
@@ -222,330 +219,298 @@ namespace ProgettoAnselmo
 			this.Controls.Add(btnNascondi);
 			this.Controls.Add(btnInterrompi);
 		}
-
-		private void ConfiguraMenu()
+		private void ConfiguraMenu() //metodo per configurare il menu principale
 		{
-			// Crea il MenuStrip
-			menuStrip = new MenuStrip();
+			menuStrip = new MenuStrip(); //crea la barra del menu
 			menuStrip.BackColor = Color.LightYellow;
 			menuStrip.Font = new Font(Font.FontFamily, 10);
+			menuStrip.Dock = DockStyle.Top;
+			menuImpostazioni = new ToolStripMenuItem("Settings"); //crea il menu impostazioni
+			menuVelocita = new ToolStripMenuItem("Speed"); //il sottomenu velocità
+			menuMusica = new ToolStripMenuItem("Music");
+			menuCrediti = new ToolStripMenuItem("Credits");
+			playSound = new ToolStripMenuItem("Play");
+			stopSound = new ToolStripMenuItem("Stop");
+			credits = new ToolStripMenuItem("Game by Manuel Dalla Santa - 4AII");
 
-			menuStrip.Dock = DockStyle.Top; // Imposta l'ancoraggio del MenuStrip per il ridimensionamento
+			playSound.Image = Image.FromFile("images/play.png");
+			stopSound.Image = Image.FromFile("images/stop.png");
+			player = new SoundPlayer("EFX/music.wav");
 
-			// Crea il menu Impostazioni
-			menuImpostazioni = new ToolStripMenuItem("Impostazioni");
-
-			// Crea il sottomenu Velocità
-			menuVelocita = new ToolStripMenuItem("Velocità");
-
-			// Crea la ComboBox per la velocità
-			comboVelocita = new ToolStripComboBox();
+			comboVelocita = new ToolStripComboBox(); //e la combobox per selezionare la velocità 
 			comboVelocita.DropDownStyle = ComboBoxStyle.DropDownList;
 			comboVelocita.Width = 120;
-
-			// Aggiungi le opzioni di velocità
-			for (int i = 1; i <= 10; i++)
+			
+			for (int i = 1; i <= 10; i++) //aggiunge le velocità da 1 a 10
 			{
 				comboVelocita.Items.Add(i.ToString());
 			}
-
-			// Imposta il valore predefinito (5)
-			comboVelocita.SelectedIndex = 4;
-
-			// Aggiungi la ComboBox al sottomenu Velocità
-			menuVelocita.DropDownItems.Add(comboVelocita);
-
-			// Aggiungi il sottomenu Velocità al menu Impostazioni
-			menuImpostazioni.DropDownItems.Add(menuVelocita);
-
-			// Aggiungi il menu Impostazioni al MenuStrip
-			menuStrip.Items.Add(menuImpostazioni);
-
-			// Aggiungi il MenuStrip al form
-			this.Controls.Add(menuStrip);
+			comboVelocita.SelectedIndex = 4; //imposta valore predefinito a 5 (parte da 0)
+			menuVelocita.DropDownItems.Add(comboVelocita); //aggiunge la combobox al sottomenu velocità
+			menuImpostazioni.DropDownItems.Add(menuVelocita); //aggiunge il sottomenu velocità al menu impostazioni
+			menuStrip.Items.Add(menuImpostazioni); //aggiunge il menu impostazioni alla barra del menu
+			menuStrip.Items.Add(menuMusica); //aggiunge il menu musica
+			menuStrip.Items.Add(menuCrediti); //aggiunge i crediti
+			menuMusica.DropDownItems.Add(playSound); //aggiunge l'opzione "play" al menu musica
+			menuMusica.DropDownItems.Add(stopSound); //aggiunge l'opzione "stop" al menu musica
+			menuCrediti.DropDownItems.Add(credits); //aggiunge la descrizione dei crediti
+			this.Controls.Add(menuStrip); //aggiunge la barra del menu al form
 			this.MainMenuStrip = menuStrip;
+			
+			playSound.Click += (sender, e) => PlayAudio();
+			stopSound.Click += (sender, e) => StopAudio();
 		}
-
-		private void BtnGenera_Click(object sender, EventArgs e)
+		private void PlayAudio()
 		{
-			// Reset
+			player.PlayLooping(); //riproduce l'audio in loop
+			logger.AggiungiMessaggio("Audio in riproduzione");
+		}
+		private void StopAudio()
+		{
+			player.Stop(); //ferma l'audio
+			logger.AggiungiMessaggio("Audio fermato");
+		}
+		private void BtnGenera_Click(object sender, EventArgs e) //gestore eventi per il pulsante che genera uova
+		{
+			//resetta code e liste
 			fabbrica.Clear();
 			prato.Clear();
 			pratoVisualizzazione.Clear();
 			AggiornaInterfaccia();
 
-			// Genera il numero di uova specificato
-			int numeroUova = (int)numUova.Value;
+			int numeroUova = (int)numUova.Value; //ottiene il numero da generare dal controllo numerico
+			int totaleMetaUova = numeroUova * 2; //calcola il numero totale di metà uova
+			int metaPerColore = totaleMetaUova / ColoriDisponibili.Length; //calcola quante metà di ogni colore utilizzare
+			int metaExtra = totaleMetaUova % ColoriDisponibili.Length; //metà in eccesso da distribuire
+			List<Color> tutteLeMetaColori = new List<Color>(); //lista con tutte le metà di colori
 
-			// Calcola quante metà di ciascun colore avremo bisogno
-			// Poiché ogni uovo ha 2 metà, avremo bisogno di numeroUova*2 metà totali
-			int totaleMetaUova = numeroUova * 2;
-
-			// Calcola quante metà di ogni colore devono essere utilizzate
-			// Vogliamo bilanciare uniformemente tra tutti i colori disponibili
-			int metaPerColore = totaleMetaUova / ColoriDisponibili.Length;
-			int metaExtra = totaleMetaUova % ColoriDisponibili.Length;
-
-			// Creiamo una lista con tutte le metà di colori che utilizzeremo
-			List<Color> tutteLeMetaColori = new List<Color>();
-
-			for (int i = 0; i < ColoriDisponibili.Length; i++)
+			for (int i = 0; i < ColoriDisponibili.Length; i++) //distribuisce i colori in modo bilanciato
 			{
-				// Aggiungi il numero standard di metà per questo colore
-				for (int j = 0; j < metaPerColore; j++)
+				for (int j = 0; j < metaPerColore; j++) //aggiunge il numero standard di metà per ogni colore
 				{
 					tutteLeMetaColori.Add(ColoriDisponibili[i]);
 				}
-
-				// Se ci sono metà extra da distribuire, aggiungi una in più per i primi 'metaExtra' colori
-				if (i < metaExtra)
-				{
-					tutteLeMetaColori.Add(ColoriDisponibili[i]);
-				}
+				if (i < metaExtra) //se ci sono metà extra, ne aggiunge una in più per i primi metaExtra colori
+					tutteLeMetaColori.Add(ColoriDisponibili[i]);		
 			}
-
-			// Mescola la lista dei colori disponibili per la randomizzazione
-			for (int i = 0; i < tutteLeMetaColori.Count; i++)
+			int randInd;
+			Color temp;
+			for (int i = 0; i < tutteLeMetaColori.Count; i++) //mescola casualmente la lista dei colori
 			{
-				int randomIndex = random.Next(tutteLeMetaColori.Count);
-				Color temp = tutteLeMetaColori[i];
-				tutteLeMetaColori[i] = tutteLeMetaColori[randomIndex];
-				tutteLeMetaColori[randomIndex] = temp;
+				randInd = random.Next(tutteLeMetaColori.Count);
+				temp = tutteLeMetaColori[i];
+				tutteLeMetaColori[i] = tutteLeMetaColori[randInd];
+				tutteLeMetaColori[randInd] = temp;
 			}
 
-			// Crea le uova prendendo due colori alla volta dalla lista mescolata
-			for (int i = 0; i < numeroUova; i++)
+			Color colore1;
+			Color colore2;
+			for (int i = 0; i < numeroUova; i++) //crea le uova prendendo due colori dalla lista mescolata
 			{
-				Color colore1 = tutteLeMetaColori[i * 2];
-				Color colore2 = tutteLeMetaColori[i * 2 + 1];
-
-				// Crea un nuovo uovo e aggiungilo alla fabbrica
-				Uovo uovo = new Uovo(colore1, colore2);
-				fabbrica.Enqueue(uovo);
+				colore1 = tutteLeMetaColori[i * 2]; //prima metà dell'uovo
+				colore2 = tutteLeMetaColori[i * 2 + 1]; //e seconda
+				Uovo uovo = new Uovo(colore1, colore2); //crea un nuovo uovo con i due colori 
+				fabbrica.Enqueue(uovo); //lo aggiunge alla fabbrica
 			}
-
-			AggiornaInterfaccia();
-			logger.AggiungiMessaggio("Passaggio: Uova generate con successo");
+			AggiornaInterfaccia(); //aggiorna l'interfaccia per mostrare le uova generate
+			logger.AggiungiMessaggio("Uova generate con successo");
 		}
-
-		private async void BtnNascondi_Click(object sender, EventArgs e)
+		private async void BtnNascondi_Click(object sender, EventArgs e) //gestore eventi async per pulsante nascondi uova
 		{
 			if (fabbrica.Count == 0)
 			{
 				MessageBox.Show("Non ci sono uova da nascondere!");
 				return;
 			}
-
 			if (animazioneInCorso)
 			{
-				MessageBox.Show("Un'animazione è già in corso, attendere...");
+				MessageBox.Show("Animazione già in corso, attendere...");
 				return;
 			}
-
-			// Imposta i flag e gli stati dei pulsanti
+			//imposta i flag e gli stati dei pulsanti per l'inizio dell'animazione
 			interrompiProcesso = false;
 			animazioneInCorso = true;
-			btnNascondi.Enabled = false;
-			btnGenera.Enabled = false;
-			btnInterrompi.Enabled = true;
+			btnNascondi.Enabled = false; //disabilita il pulsante durante l'animazione
+			btnGenera.Enabled = false; //disabilita il pulsante durante l'animazione
+			btnInterrompi.Enabled = true; //abilita il pulsante di interruzione
 
-			// Avvia il processo di soluzione in un Task separato
-			bool successo = await Task.Run(() => TrovaSoluzione());
+			bool successo = await Task.Run(() => TrovaSoluzione()); //avvia processo di soluzione in un Task separato
 
-			// Reimposta i flag e gli stati dei pulsanti
+			//reimposta i flag e gli stati dei pulsanti al termine dell'animazione
 			animazioneInCorso = false;
 			btnNascondi.Enabled = true;
 			btnGenera.Enabled = true;
 			btnInterrompi.Enabled = false;
 
-			if (interrompiProcesso)
+			if (interrompiProcesso) //se il processo viene interrotto
 			{
-				logger.AggiungiMessaggio("Passaggio: Processo interrotto");
+				logger.AggiungiMessaggio("Processo interrotto");
 			}
-			else if (successo)
+			else if (successo) //se è stata trovata una soluzione completa
 			{
-				logger.AggiungiMessaggio("Passaggio: Soluzione completata");
+				logger.AggiungiMessaggio("Soluzione completata");
 				MessageBox.Show("Soluzione completata", "Fine Simulazione", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-				this.Close();
+				this.Close(); //chiude il form
 			}
-			else
+			else //non è stata trovata una soluzione completa
 			{
-				logger.AggiungiMessaggio("Passaggio: Nessuna soluzione trovata");
-				MessageBox.Show("Nessuna soluzione trovata", "Fine Simulazione", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-				this.Close();
+				// Verifica se alcune uova sono state posizionate nel prato
+				if (prato.Count > 0)
+				{
+					logger.AggiungiMessaggio($"Soluzione parziale trovata - {prato.Count} uova nel prato");
+					MessageBox.Show($"Soluzione parziale trovata: {prato.Count} uova nel prato",
+						"Fine Simulazione", MessageBoxButtons.OK, MessageBoxIcon.Information);
+				}
+				else
+				{
+					logger.AggiungiMessaggio("Nessuna soluzione trovata");
+					MessageBox.Show("Nessuna soluzione trovata", "Fine Simulazione", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+				}
+				this.Close(); //chiude il form
 			}
 		}
-
-		private void BtnInterrompi_Click(object sender, EventArgs e)
+		private void BtnInterrompi_Click(object sender, EventArgs e) //gestore eventi per pulsante interrompi
 		{
-			interrompiProcesso = true;
+			interrompiProcesso = true; //flag per interrompere il processo in corso
 		}
-
-		private bool TrovaSoluzione()
+		private bool TrovaSoluzione() //metodo per avviare la ricerca di una soluzione
 		{
-			// Iniziamo con un prato vuoto
-			Invoke(new Action(() =>
+			Invoke(new Action(() => //inizializza il prato vuoto
 			{
 				prato.Clear();
 				pratoVisualizzazione.Clear();
 				AggiornaInterfaccia();
-				logger.AggiungiMessaggio("Passaggio: Iniziata ricerca soluzione");
+				logger.AggiungiMessaggio("Iniziata ricerca soluzione");
 			}));
 
-			// Copiamo la fabbrica originale per non alterarla durante la ricerca
-			List<Uovo> uovaOriginali = new List<Uovo>(fabbrica);
+			List<Uovo> uovaOriginali = new List<Uovo>(fabbrica); //crea una copia delle uova originali per non modificarle
 			fabbrica.Clear();
 
-			foreach (var uovo in uovaOriginali)
+			foreach (Uovo uovo in uovaOriginali) //rimette le uova nella fabbrica
 			{
 				fabbrica.Enqueue(uovo);
 			}
-
-			return BacktrackingNascondiUova();
+			return BacktrackingNascondiUova(); //avvia l'algoritmo di backtracking per trovare una soluzione
 		}
 
-		private bool BacktrackingNascondiUova()
+		private bool BacktrackingNascondiUova() //metodo ricorsivo di backtracking per trovare una soluzione
 		{
-			// Controlla se il processo è stato interrotto
-			if (interrompiProcesso)
+			if (interrompiProcesso) //se il processo è stato interrotto dall'utente
 				return false;
 
-			// Ottieni la velocità attuale (inversa - più basso = più lento)
-			int velocita = 0;
+			int velocita = 0; //velocità corrente dell'animazione dalla combobox
 			Invoke(new Action(() => velocita = int.Parse(comboVelocita.SelectedItem.ToString())));
-			int pausa = 1100 - (velocita * 100); // Da 1000ms a 100ms
+			int pausa = 1100 - (velocita * 100); //calcola il tempo di pausa (da 100ms a 1000ms)
 
-			// Base case: se la fabbrica è vuota, abbiamo trovato una soluzione
-			if (fabbrica.Count == 0)
-				return true;
+			if (fabbrica.Count == 0) //caso base: se la fabbrica è vuota 
+				return true; //tutte le uova sono state posizionate con successo
 
-			// Esaminiamo tutte le uova nella fabbrica
 			int numeroUovaInFabbrica = fabbrica.Count;
+			int maxUovaNelPrato = pratoVisualizzazione.Count; // Memorizza il massimo numero di uova posizionate finora
+			Queue<Uovo> pratoMigliore = new Queue<Uovo>(prato); // Memorizza la migliore configurazione del prato
+			List<Uovo> pratoVisualizzazioneMigliore = new List<Uovo>(pratoVisualizzazione); // Per la visualizzazione
 
-			for (int i = 0; i < numeroUovaInFabbrica; i++)
+			for (int i = 0; i < numeroUovaInFabbrica; i++) //esamina tutte le uova nella fabbrica
 			{
-				// Controlla se il processo è stato interrotto
-				if (interrompiProcesso)
+				if (interrompiProcesso) //controlla nuovamente se il processo è stato interrotto
 					return false;
 
-				Uovo uovoCorrente = fabbrica.Dequeue();
-
-				// Salviamo una copia della coda del prato e della lista di visualizzazione
+				Uovo uovoCorrente = fabbrica.Dequeue(); //estrae il primo uovo dalla fabbrica
+														//salva lo stato corrente per il backtracking se necessario
 				Queue<Uovo> pratoBackup = new Queue<Uovo>(prato);
 				List<Uovo> pratoVisualizzazioneBackup = new List<Uovo>(pratoVisualizzazione);
 
-				// Visualizza l'uovo corrente che stiamo valutando
+				//verifica se l'uovo può essere messo nel prato
 				bool puoEssereNascosto = pratoVisualizzazione.Count == 0 || uovoCorrente.CondivideColore(pratoVisualizzazione.Last());
-				MostraTentativo(uovoCorrente, puoEssereNascosto);
-				Thread.Sleep(pausa);
 
-				if (puoEssereNascosto)
+				MostraTentativo(uovoCorrente, puoEssereNascosto); //mostra il tentativo nell'interfaccia
+				Thread.Sleep(pausa); //pausa per visualizzare l'animazione
+
+				if (puoEssereNascosto) //se l'uovo può essere messo nel prato
 				{
-					// Nascondi l'uovo
-					prato.Enqueue(uovoCorrente);
+					prato.Enqueue(uovoCorrente); //lo aggiunge
 					pratoVisualizzazione.Add(uovoCorrente);
 
-					// Visualizza lo spostamento
-					MostraSpostamento(uovoCorrente, versoPrato: true);
-					Thread.Sleep(pausa);
+					MostraSpostamento(uovoCorrente, versoPrato: true); //mostra lo spostamento nell'interfaccia
+					Thread.Sleep(pausa); //pausa per visualizzare l'animazione
 
-					// Ricorsione
-					if (BacktrackingNascondiUova())
-						return true;
+					if (BacktrackingNascondiUova()) //ricorsione: prova a continuare con le uova rimanenti
+						return true; //soluzione trovata
 
-					// Backtracking: rimuovi l'ultimo uovo dal prato
-					// Ripristino le code ai valori precedenti
-					prato = pratoBackup;
+					// Controlla se questa configurazione parziale è migliore di quella precedente
+					if (pratoVisualizzazione.Count > maxUovaNelPrato)
+					{
+						maxUovaNelPrato = pratoVisualizzazione.Count;
+						pratoMigliore = new Queue<Uovo>(prato);
+						pratoVisualizzazioneMigliore = new List<Uovo>(pratoVisualizzazione);
+					}
+
+					prato = pratoBackup; //backtracking: se la soluzione non è stata trovata, annulla l'ultima mossa
 					pratoVisualizzazione = pratoVisualizzazioneBackup;
 
-					// Rimetti l'uovo alla fine della fabbrica
-					fabbrica.Enqueue(uovoCorrente);
+					fabbrica.Enqueue(uovoCorrente); //rimette l'uovo alla fine della fabbrica
 
-					// Visualizza il backtracking
-					MostraSpostamento(uovoCorrente, versoPrato: false);
+					MostraSpostamento(uovoCorrente, versoPrato: false); //mostra il backtracking nell'interfaccia
 					Thread.Sleep(pausa);
 				}
-				else
+				else //se l'uovo non può essere messo nel prato
 				{
-					// Rimetti l'uovo alla fine della fabbrica
-					fabbrica.Enqueue(uovoCorrente);
-
-					// Visualizza che l'uovo non può essere spostato e viene rimesso in fabbrica
-					MostraRimessaInFabbrica(uovoCorrente);
-					Thread.Sleep(pausa / 2); // Più veloce perché è solo un'azione informativa
+					fabbrica.Enqueue(uovoCorrente); //lo rimette alla fine della fabbrica
+					MostraRimessaInFabbrica(uovoCorrente); //mostra che l'uovo viene rimesso in fabbrica
+					Thread.Sleep(pausa); //TODO: /2
 				}
 			}
 
-			// Se arriviamo qui, non abbiamo trovato una soluzione con l'attuale configurazione
-			return false;
-		}
+			if (maxUovaNelPrato > 0) //se non è stata trovata una soluzione completa, ma abbiamo uova nel prato
+			{
+				Invoke(new Action(() =>
+				{
+					logger.AggiungiMessaggio($"Configurazione ottimale con {maxUovaNelPrato} uova nel prato");
+				}));
+				prato = pratoMigliore; //manteniamo la configurazione migliore trovata
+				pratoVisualizzazione = pratoVisualizzazioneMigliore;
 
-		private void MostraTentativo(Uovo uovo, bool puoEssereNascosto)
+				Invoke(new Action(() => AggiornaInterfaccia())); //aggiorna interfaccia per mostrare configurazione migliore
+				Thread.Sleep(pausa);
+			}
+
+			return false; //non è stata trovata una soluzione completa
+		}
+		private void MostraTentativo(Uovo uovo, bool puoEssereNascosto) //metodo per mostrare un tentativo nell'interfaccia
 		{
 			Invoke(new Action(() =>
 			{
-				string messaggio = puoEssereNascosto
-					? $"Tentativo: L'uovo {uovo} può essere spostato nel prato"
-					: $"Tentativo: L'uovo {uovo} NON può essere spostato nel prato";
+				string messaggio = puoEssereNascosto ? $"L'uovo {uovo.Colore1.Name}-{uovo.Colore2.Name} può essere spostato nel prato"
+					: $"L'uovo {uovo.Colore1.Name}-{uovo.Colore2.Name} NON può essere spostato nel prato";
 
 				logger.AggiungiMessaggio(messaggio);
-
-				// Aggiorna l'interfaccia per mostrare lo stato attuale
 				AggiornaInterfaccia();
-
-				// Evidenzia l'uovo corrente
-				//contenitoreFabbrica.EvidenziaPrimo();
 			}));
 		}
-
-		private void MostraSpostamento(Uovo uovo, bool versoPrato)
+		private void MostraSpostamento(Uovo uovo, bool versoPrato) //metodo per mostrare lo spostamento di un uovo
 		{
 			Invoke(new Action(() =>
 			{
 				AggiornaInterfaccia();
 
 				if (versoPrato)
-				{
-					//contenitorePrato.EvidenziaUltimo();
-					logger.AggiungiMessaggio($"Passaggio: Uovo {uovo} spostato nel prato");
-				}
+					logger.AggiungiMessaggio($"Uovo {uovo.Colore1.Name}-{uovo.Colore2.Name} spostato nel prato");
 				else
-				{
-					//contenitoreFabbrica.EvidenziaUltimo();
-					logger.AggiungiMessaggio($"Passaggio: Backtracking - Uovo {uovo} rimesso nella fabbrica");
-				}
+					logger.AggiungiMessaggio($"Backtracking - Uovo {uovo.Colore1.Name}-{uovo.Colore2.Name} rimesso nella fabbrica");
 			}));
 		}
-
-		private void MostraRimessaInFabbrica(Uovo uovo)
+		private void MostraRimessaInFabbrica(Uovo uovo) //metodo per mostrare che un uovo viene rimesso in fabbrica
 		{
 			Invoke(new Action(() =>
 			{
 				AggiornaInterfaccia();
-				//contenitoreFabbrica.EvidenziaUltimo();
-				logger.AggiungiMessaggio($"Passaggio: Uovo {uovo} non compatibile, rimesso in fabbrica");
+				logger.AggiungiMessaggio($"Uovo {uovo.Colore1.Name}-{uovo.Colore2.Name} non compatibile, rimesso in fabbrica");
 			}));
 		}
-		private void AggiornaInterfaccia()
+		private void AggiornaInterfaccia() //metodo per aggiornare l'interfaccia utente
 		{
-			// Aggiorna il contenitore della fabbrica
-			contenitoreFabbrica.AggiornaUova(fabbrica);
-
-			// Aggiorna il contenitore del prato
-			contenitorePrato.AggiornaUova(prato);
-		}
-		private void InitializeComponent()
-		{
-			SuspendLayout();
-			// 
-			// Form1
-			// 
-			BackColor = Color.White;
-			BackgroundImage = Properties.Resources.Nastroprato;
-			BackgroundImageLayout = ImageLayout.Stretch;
-			ClientSize = new Size(900, 650);
-			Name = "Form1";
-			ResumeLayout(false);
+			contenitoreFabbrica.AggiornaUova(fabbrica); //aggiorna il contenitore della fabbrica con le uova correnti
+			contenitorePrato.AggiornaUova(prato); //e il contenitore del prato
 		}
 	}
 }
