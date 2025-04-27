@@ -7,14 +7,16 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.IO;
 
 namespace ProgettoAnselmo
 {
 	public partial class FormLogger : Form
 	{
-		private ListBox lstLog; 
+		private ListBox lstLog;
 		private Button btnClear;
 		private Label lblTitolo;
+		private string percorsoLog;
 		public FormLogger()
 		{
 			InitializeComponent();
@@ -26,6 +28,8 @@ namespace ProgettoAnselmo
 			ForeColor = Color.Black;
 			FormBorderStyle = FormBorderStyle.FixedSingle;
 			MaximizeBox = false;
+
+			percorsoLog = "log.txt";
 
 			lblTitolo = new Label
 			{
@@ -47,7 +51,7 @@ namespace ProgettoAnselmo
 
 			btnClear = new Button
 			{
-				Text = "Pulisci Log",
+				Text = "Clean Log",
 				Location = new Point(20, 370),
 				Size = new Size(120, 30),
 				FlatStyle = FlatStyle.Flat,
@@ -56,13 +60,14 @@ namespace ProgettoAnselmo
 			};
 
 			btnClear.FlatAppearance.BorderSize = 0;
-			btnClear.Click += (s, e) => lstLog.Items.Clear();
-
+			btnClear.Click += (s, e) =>
+			{
+				lstLog.Items.Clear();
+			};
 			this.Controls.Add(lblTitolo);
 			this.Controls.Add(lstLog);
 			this.Controls.Add(btnClear);
 		}
-
 
 		//metodo per scrivere un messaggio nel logger
 		public void AggiungiMessaggio(string messaggio)
@@ -74,10 +79,22 @@ namespace ProgettoAnselmo
 				Invoke(new Action(() => AggiungiMessaggio(messaggio)));
 				return;
 			}
-			//aggiunge il messaggio alla ListBox
-			lstLog.Items.Add($"- {messaggio}");
-			//scorre la ListBox verso il basso per mostrare l'ultimo elemento inserito
-			lstLog.TopIndex = lstLog.Items.Count - 1;
+
+			string mess = $"- {messaggio}"; //prepara il messaggio formattato
+
+			lstLog.Items.Add(mess); //aggiunge il messaggio alla listbox
+			lstLog.TopIndex = lstLog.Items.Count - 1; //scorre la ListBox verso il basso per mostrare l'ultimo elemento inserito
+
+			try //scrive lo stesso messaggio nel file di log
+			{
+				string messaggioConData = $"{DateTime.Now:dd-MM-yyyy HH:mm:ss} {mess}"; //aggiunge data e ora
+				File.AppendAllText(percorsoLog, messaggioConData + Environment.NewLine); //append per aggiungere messaggio a fine file senza sovrascrivere
+			}
+			catch (Exception ex)
+			{
+				lstLog.Items.Add($"- ERRORE scrittura su file: {ex.Message}");
+				lstLog.TopIndex = lstLog.Items.Count - 1;
+			}
 		}
 	}
 }

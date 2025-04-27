@@ -172,7 +172,7 @@ namespace ProgettoAnselmo
 			pratoVisualizzazione.Clear();
 			AggiornaInterfaccia();
 
-			int numeroUova = (int)numUova.Value; //ottiene il numero da generare dal controllo numerico
+			int numeroUova = (int)numUova.Value; //ottiene il numero da generare dal numericupdown
 			int totaleMetaUova = numeroUova * 2; //calcola il numero totale di metà uova
 			int metaPerColore = totaleMetaUova / ColoriDisponibili.Length; //calcola quante metà di ogni colore utilizzare
 			int metaExtra = totaleMetaUova % ColoriDisponibili.Length; //metà in eccesso da distribuire
@@ -187,8 +187,8 @@ namespace ProgettoAnselmo
 				if (i < metaExtra) //se ci sono metà extra, ne aggiunge una in più per i primi metaExtra colori
 					tutteLeMetaColori.Add(ColoriDisponibili[i]);
 			}
-			int randInd;
-			Color temp;
+			int randInd; //indice casuale
+			Color temp; //variabile d'appoggio per lo scambio
 			for (int i = 0; i < tutteLeMetaColori.Count; i++) //mescola casualmente la lista dei colori
 			{
 				randInd = random.Next(tutteLeMetaColori.Count);
@@ -243,7 +243,7 @@ namespace ProgettoAnselmo
 			else if (successo) //se è stata trovata una soluzione completa
 			{
 				logger.AggiungiMessaggio("Soluzione completata");
-				MessageBox.Show("Soluzione completata", "Fine Simulazione", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+				MessageBox.Show("Soluzione completata", "Fine Simulazione", MessageBoxButtons.OK, MessageBoxIcon.Information);
 				this.Close(); //chiude il form
 			}
 			else //non è stata trovata una soluzione completa
@@ -253,7 +253,7 @@ namespace ProgettoAnselmo
 				{
 					logger.AggiungiMessaggio($"Soluzione parziale trovata - {prato.Count} uova nel prato");
 					MessageBox.Show($"Soluzione parziale trovata: {prato.Count} uova nel prato",
-						"Fine Simulazione", MessageBoxButtons.OK, MessageBoxIcon.Information);
+						"Fine Simulazione", MessageBoxButtons.OK, MessageBoxIcon.Warning);
 				}
 				else
 				{
