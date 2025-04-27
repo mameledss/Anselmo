@@ -5,7 +5,7 @@ using System.Windows.Forms;
 
 namespace ProgettoAnselmo
 {
-	public partial class Form1 : Form 
+	public partial class Form1 : Form
 	{
 		private Queue<Uovo> fabbrica = new Queue<Uovo>(); //coda per memorizzare le uova nella fabbrica
 		private Queue<Uovo> prato = new Queue<Uovo>(); //coda per memorizzare le uova nel prato
@@ -13,22 +13,16 @@ namespace ProgettoAnselmo
 
 		private static readonly Color[] ColoriDisponibili = new Color[] //array di colori per le uova
 		{
-			Uovo.ColoreDaHex("#93c808"), // verde
-			Uovo.ColoreDaHex("#fffdd0"), // giallo
-			Uovo.ColoreDaHex("#ffd4d4"), // rosa
-			Uovo.ColoreDaHex("#ff9c7e"), // arancione
-			Uovo.ColoreDaHex("#d1b8ff"), // viola
-			Uovo.ColoreDaHex("#dee4ff")  // azzurro
+			Uovo.ColoreDaHex("#93c808"), //verde
+			Uovo.ColoreDaHex("#fffdd0"), //giallo
+			Uovo.ColoreDaHex("#ffd4d4"), //rosa
+			Uovo.ColoreDaHex("#ff9c7e"), //arancione
+			Uovo.ColoreDaHex("#d1b8ff"), //viola
+			Uovo.ColoreDaHex("#dee4ff")  //azzurro
 		};
 		private Random random = new Random();
 		private ContenitoreUova contenitoreFabbrica; //controlli per visualizzare le uova nella fabbrica	 
 		private ContenitoreUova contenitorePrato; //e nel prato
-												  
-		private Button btnGenera; //pulsante per generare le uova
-		private Button btnNascondi; //pulsante per nascondere le uova	
-		private Button btnInterrompi; //pulsante per interrompere il processo
-		private NumericUpDown numUova; //controllo per selezionare il numero di uova da generare						   
-		private Label lblNumUova; //etichetta per il controllo numerico
 		private FormLogger logger; //form logger
 
 		private MenuStrip menuStrip; //elementi del menu
@@ -37,10 +31,10 @@ namespace ProgettoAnselmo
 		private ToolStripMenuItem menuMusica; //impostazioni musica di sottofondo
 		private ToolStripMenuItem menuCrediti; //autore
 		private ToolStripComboBox comboVelocita; //comboBox per selezionare la velocità
-		private ToolStripMenuItem playSound;
-		private ToolStripMenuItem stopSound;
-		private ToolStripMenuItem credits;
-		private SoundPlayer player;
+		private ToolStripMenuItem playSound; //elemento del menu per far partire musica
+		private ToolStripMenuItem stopSound; //e per fermare
+		private ToolStripMenuItem credits; //sezione per i crediti
+		private SoundPlayer player; //elemento per riprodurre musica
 
 		private bool interrompiProcesso = false; //flag per controllare l'interruzione del processo di backtracking
 		private bool animazioneInCorso = false; //flag per indicare se un'animazione è in corso
@@ -53,14 +47,16 @@ namespace ProgettoAnselmo
 		{
 			InitializeComponent();
 			ConfiguraInterfaccia();
-			logger = new(); //crea una nuova istanza del FormLogger
+			logger = new(); //crea una nuova istanza di FormLogger
 			logger.Show(); //mostra il form di log
+			dimOrigin = this.Size; //salva le dimensioni originali del form per il calcolo del ridimensionamento
 
-			//salva le dimensioni originali del form per il calcolo del ridimensionamento
-			dimOrigin = this.Size;
+			this.Resize += Form1_Resize; //gestore eventi per il ridimensionamento del form
 
-			//aggiunge un gestore eventi per il ridimensionamento del form
-			this.Resize += Form1_Resize;
+			//gestori eventi per i pulsanti
+			btnGenera.Click += BtnGenera_Click;
+			btnNascondi.Click += BtnNascondi_Click;
+			btnInterrompi.Click += BtnInterrompi_Click;
 		}
 		private void Form1_Resize(object sender, EventArgs e) //gestore eventi per ridimensionamento form
 		{
@@ -68,14 +64,14 @@ namespace ProgettoAnselmo
 			if (dimOrigin.Width == 0 || dimOrigin.Height == 0)
 				return; //ritorna
 
-			//calcola i fattori di scala basati sulle dimensioni originali e correnti del form
+			//fattori di scala basati su dimensioni originali e correnti del form
 			fattScalaX = (float)this.Width / dimOrigin.Width;
 			fattScalaY = (float)this.Height / dimOrigin.Height;
 
-			//ridimensiona tutti i controlli in base ai nuovi fattori di scala
-			RidimensionaControlli();
+			//ridimensiona i contenitori in base ai nuovi fattori di scala
+			RidimensionaContenitori();
 		}
-		private void RidimensionaControlli() //metodo per ridimensionare i controlli
+		private void RidimensionaContenitori() //metodo per ridimensionare i contenitori
 		{
 			//ridimensiona e riposiziona il contenitore della fabbrica
 			if (contenitoreFabbrica != null)
@@ -83,141 +79,39 @@ namespace ProgettoAnselmo
 				contenitoreFabbrica.Location = new Point((int)(20 * fattScalaX), (int)(60 * fattScalaY));
 				contenitoreFabbrica.Size = new Size((int)(840 * fattScalaX), (int)(160 * fattScalaY));
 			}
-			//del prato
-			if (contenitorePrato != null)
+			if (contenitorePrato != null) //e del prato
 			{
-				contenitorePrato.Location = new Point((int)(20 * fattScalaX), (int)(220 * fattScalaY));
+				contenitorePrato.Location = new Point((int)(20 * fattScalaX), (int)(260 * fattScalaY));
 				contenitorePrato.Size = new Size((int)(840 * fattScalaX), (int)(160 * fattScalaY));
 			}
-			int contrY = (int)(480 * fattScalaY); //calcola la posizione Y per i controlli inferiori
-
-			if (lblNumUova != null) //ridimensiona e riposiziona l'etichetta per il controllo numerico
-			{
-				lblNumUova.Location = new Point((int)(20 * fattScalaX), contrY + 9);
-				lblNumUova.Font = new Font(Font.FontFamily, 10 * Math.Min(fattScalaX, fattScalaY));
-			}
-
-			if (numUova != null) //ridimensiona e riposiziona il controllo numerico
-			{
-				numUova.Location = new Point((int)(170 * fattScalaX), contrY + 4);
-				numUova.Size = new Size((int)(60 * fattScalaX), (int)(25 * fattScalaY));
-				numUova.Font = new Font(Font.FontFamily, 10 * Math.Min(fattScalaX, fattScalaY));
-			}
-			//calcola dimensioni e spaziatura per i pulsanti
-			int largPuls = (int)(140 * fattScalaX);
-			int spazioPuls = (int)(20 * fattScalaX);
-			int primoPulsX = (int)(250 * fattScalaX);
-
-			if (btnGenera != null) //ridimensiona e riposiziona il pulsante per generare le uova
-			{
-				btnGenera.Location = new Point(primoPulsX, contrY);
-				btnGenera.Size = new Size(largPuls, (int)(40 * fattScalaY));
-				btnGenera.Font = new Font(Font.FontFamily, 10 * Math.Min(fattScalaX, fattScalaY));
-			}
-
-			if (btnNascondi != null) //il pulsante per nascondere le uova
-			{
-				btnNascondi.Location = new Point(primoPulsX + largPuls + spazioPuls, contrY);
-				btnNascondi.Size = new Size(largPuls, (int)(40 * fattScalaY));
-				btnNascondi.Font = new Font(Font.FontFamily, 10 * Math.Min(fattScalaX, fattScalaY));
-			}
-
-			if (btnInterrompi != null) //il pulsante per interrompere
-			{
-				btnInterrompi.Location = new Point(primoPulsX + (largPuls + spazioPuls) * 2, contrY);
-				btnInterrompi.Size = new Size(largPuls, (int)(40 * fattScalaY));
-				btnInterrompi.Font = new Font(Font.FontFamily, 10 * Math.Min(fattScalaX, fattScalaY));
-			}
-
 			AggiornaInterfaccia(); //aggiorna l'interfaccia per mostrare i cambiamenti
 		}
 		private void ConfiguraInterfaccia() //metodo per configurare l'interfaccia utente
 		{
 			this.Text = "Anselmo's Lawn";
-			this.Width = 900;
-			this.Height = 580;
 			this.FormBorderStyle = FormBorderStyle.Sizable; //form ridimensionabile
 			this.MinimumSize = new Size(900, 580); //dimensioni minime
 
-			int contrY = 480;
+			tlpControlli.BackColor = Color.Transparent; //imposta il colore del TLP come trasparente
 			ConfiguraMenu(); //configura il menu principale
 
-			contenitoreFabbrica = new ContenitoreUova("Factory:") //contenitore per le uova nella fabbrica
+			contenitoreFabbrica = new ContenitoreUova() //contenitore per le uova nella fabbrica
 			{
 				Location = new Point(20, 60),
 				Size = new Size(840, 160),
 				BackColor = Color.Transparent,
 				BorderStyle = BorderStyle.None
 			};
-			contenitorePrato = new ContenitoreUova("Lawn:") //contenitore per le uova nel prato
+			contenitorePrato = new ContenitoreUova() //contenitore per le uova nel prato
 			{
-				Location = new Point(20, 220),
+				Location = new Point(20, 260),
 				Size = new Size(840, 160),
 				BackColor = Color.Transparent,
 				BorderStyle = BorderStyle.None
 			};
-			lblNumUova = new Label //etichetta per il controllo numerico
-			{
-				Text = "Number of Eggs:",
-				Location = new Point(20, contrY + 9),
-				AutoSize = true,
-				Font = new Font(Font.FontFamily, 10)
-			};
-
-			numUova = new NumericUpDown //controllo per selezionare il numero di uova
-			{
-				Location = new Point(170, contrY + 4),
-				Size = new Size(60, 25),
-				Minimum = 2, //numero minimo di uova
-				Maximum = 20, //e massimo
-				Value = 5, //valore predefinito
-				Font = new Font(Font.FontFamily, 10)
-			};
-			//dimensioni e spaziatura per i pulsanti
-			int largPuls = 140;
-			int spazioPuls = 20;
-			int primoPulsX = 250;
-
-			btnGenera = new Button //pulsante per generare le uova
-			{
-				Text = "Generate Eggs",
-				Location = new Point(primoPulsX, contrY),
-				Size = new Size(largPuls, 40),
-				Font = new Font(Font.FontFamily, 10),
-				Cursor = Cursors.Hand
-			};
-
-			btnNascondi = new Button //pulsante per nascondere le uova
-			{
-				Text = "Hide Eggs",
-				Location = new Point(primoPulsX + largPuls + spazioPuls, contrY),
-				Size = new Size(largPuls, 40),
-				Font = new Font(Font.FontFamily, 10),
-				Cursor = Cursors.Hand
-			};
-
-			btnInterrompi = new Button //pulsante per interrompere il processo
-			{
-				Text = "Stop",
-				Location = new Point(primoPulsX + (largPuls + spazioPuls) * 2, contrY),
-				Size = new Size(largPuls, 40),
-				Enabled = false, //inizialmente disabilitato 
-				Font = new Font(Font.FontFamily, 10),
-				Cursor = Cursors.Hand
-			};
-			//gestori eventi per pulsanti
-			btnGenera.Click += BtnGenera_Click;
-			btnNascondi.Click += BtnNascondi_Click;
-			btnInterrompi.Click += BtnInterrompi_Click;
-
-			//aggiunge i controlli al form
+			//aggiunge i contenitori al form
 			this.Controls.Add(contenitoreFabbrica);
 			this.Controls.Add(contenitorePrato);
-			this.Controls.Add(lblNumUova);
-			this.Controls.Add(numUova);
-			this.Controls.Add(btnGenera);
-			this.Controls.Add(btnNascondi);
-			this.Controls.Add(btnInterrompi);
 		}
 		private void ConfiguraMenu() //metodo per configurare il menu principale
 		{
@@ -240,7 +134,7 @@ namespace ProgettoAnselmo
 			comboVelocita = new ToolStripComboBox(); //e la combobox per selezionare la velocità 
 			comboVelocita.DropDownStyle = ComboBoxStyle.DropDownList;
 			comboVelocita.Width = 120;
-			
+
 			for (int i = 1; i <= 10; i++) //aggiunge le velocità da 1 a 10
 			{
 				comboVelocita.Items.Add(i.ToString());
@@ -256,7 +150,7 @@ namespace ProgettoAnselmo
 			menuCrediti.DropDownItems.Add(credits); //aggiunge la descrizione dei crediti
 			this.Controls.Add(menuStrip); //aggiunge la barra del menu al form
 			this.MainMenuStrip = menuStrip;
-			
+
 			playSound.Click += (sender, e) => PlayAudio();
 			stopSound.Click += (sender, e) => StopAudio();
 		}
@@ -291,7 +185,7 @@ namespace ProgettoAnselmo
 					tutteLeMetaColori.Add(ColoriDisponibili[i]);
 				}
 				if (i < metaExtra) //se ci sono metà extra, ne aggiunge una in più per i primi metaExtra colori
-					tutteLeMetaColori.Add(ColoriDisponibili[i]);		
+					tutteLeMetaColori.Add(ColoriDisponibili[i]);
 			}
 			int randInd;
 			Color temp;
@@ -457,10 +351,9 @@ namespace ProgettoAnselmo
 				{
 					fabbrica.Enqueue(uovoCorrente); //lo rimette alla fine della fabbrica
 					MostraRimessaInFabbrica(uovoCorrente); //mostra che l'uovo viene rimesso in fabbrica
-					Thread.Sleep(pausa); //TODO: /2
+					Thread.Sleep(pausa);
 				}
 			}
-
 			if (maxUovaNelPrato > 0) //se non è stata trovata una soluzione completa, ma abbiamo uova nel prato
 			{
 				Invoke(new Action(() =>

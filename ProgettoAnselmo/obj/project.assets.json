@@ -13,11 +13,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\mamel\\OneDrive\\Desktop\\Scuola\\C#\\Anselmo\\ProgettoAnselmo\\ProgettoAnselmo.csproj",
+      "projectUniqueName": "C:\\Users\\mamel\\Desktop\\Anselmo\\ProgettoAnselmo\\ProgettoAnselmo.csproj",
       "projectName": "ProgettoAnselmo",
-      "projectPath": "C:\\Users\\mamel\\OneDrive\\Desktop\\Scuola\\C#\\Anselmo\\ProgettoAnselmo\\ProgettoAnselmo.csproj",
+      "projectPath": "C:\\Users\\mamel\\Desktop\\Anselmo\\ProgettoAnselmo\\ProgettoAnselmo.csproj",
       "packagesPath": "C:\\Users\\mamel\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\mamel\\OneDrive\\Desktop\\Scuola\\C#\\Anselmo\\ProgettoAnselmo\\obj\\",
+      "outputPath": "C:\\Users\\mamel\\Desktop\\Anselmo\\ProgettoAnselmo\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\mamel\\AppData\\Roaming\\NuGet\\NuGet.Config",
@@ -69,7 +69,7 @@
             "privateAssets": "none"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.204/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.400/PortableRuntimeIdentifierGraph.json"
       }
     }
   }

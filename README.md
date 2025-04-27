@@ -7,9 +7,9 @@ Anselmo's Happy Easter è una simulazione in cui potrai vestire i panni di Ansel
 - Animazione del processo di backtracking
 - Interfaccia ridimensionabile con layout adattivo
 ## Features Aggiuntive
-- Log delle operazioni eseguite con scrittura su file .txt
+- Log delle operazioni eseguite
 - Velocità delle animazioni regolabile dalla sezione "Settings"
-- Musica di sottofondo regolabile dalla sezione "Settings"
+- Musica di sottofondo regolabile dalla sezione "Music" del Menu
 ## Classi
 - Uovo: rappresenta un uovo con due colori (metà superiore e inferiore).
 - UovoControl: permette di visualizzare le uova a livello grafico.
